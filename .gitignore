@@ -1,0 +1,63 @@
+## Build results
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+[Dd]ebugPublic/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Oo]ut/
+
+## Visual Studio / Rider
+.vs/
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.DotSettings.user
+.idea/
+
+## NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Test and coverage
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+
+## Publish
+publish/
+*.Publish.xml
+*.pubxml
+*.azurePubxml
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Local secrets. Commit .env.example only.
+.env
+**/.env
+!.env.example
+!**/.env.example
+*.pfx
+*.snk
+secrets.json
+appsettings.*.local.json

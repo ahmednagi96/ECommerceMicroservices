@@ -1,0 +1,17 @@
+.git
+.gitignore
+.vs
+.vscode
+.idea
+**/.DS_Store
+**/bin
+**/obj
+**/*.user
+**/*.suo
+**/TestResults
+**/.env
+src/Services/Catalog/.env
+src/Services/Basket/.env
+src/Services/Ordering/.env
+docker-compose.yml
+**/*.md

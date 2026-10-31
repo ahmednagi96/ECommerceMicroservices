@@ -1,0 +1,243 @@
+# ست خدمات: 3 واجهات + 3 قواعد SQL Server، كل واحدة بقاعدة بياناتها.
+#
+# أسماء القواعد وكلمات المرور تُقرأ من ملفات الـ .env كما هي، ومش مكتوبة هنا:
+#   src/Services/Basket/.env     DB_PORT=1435
+#   src/Services/Catalog/.env    DB_PORT=1436
+#   src/Services/Ordering/.env   DB_PORT=1437
+#
+# من على الجهاز البورت هو DB_PORT عشان SSMS و dotnet run يفضلوا زي الملف.
+# جوّه شبكة Docker القاعدة بتسمع على 1433، والـ API بيتصل باسم الخدمة مش localhost.
+#
+# بورتات الواجهات هي بروفايل http في launchSettings:
+#   Catalog   http://localhost:5299/swagger
+#   Basket    http://localhost:5260/swagger
+#   Ordering  http://localhost:5257/swagger
+#
+#   docker compose up -d --build
+#   docker compose down
+#   docker compose down -v
+
+name: ecommerce
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+# SQL Server بيرفض الإقلاع لو شايف أقل من 2GB، فسقف الحاوية أعلى من كده.
+# MSSQL_MEMORY_LIMIT_MB بيحبس الاستهلاك الفعلي عشان التلات قواعد يعيشوا على لابتوب.
+x-sqlserver: &sqlserver
+  image: mcr.microsoft.com/mssql/server:2022-latest
+  platform: linux/amd64
+  pull_policy: missing
+  restart: unless-stopped
+  init: true
+  stop_grace_period: 30s
+  networks:
+    - ecommerce
+  entrypoint: ["/bin/bash", "-c"]
+  command:
+    - |
+      set -euo pipefail
+      if [ -z "$${DB_PASSWORD:-}" ]; then
+        echo "DB_PASSWORD is empty. Check the service .env file." >&2
+        exit 1
+      fi
+      export ACCEPT_EULA=Y
+      export MSSQL_PID=Developer
+      export MSSQL_MEMORY_LIMIT_MB="$${MSSQL_MEMORY_LIMIT_MB:-512}"
+      export MSSQL_SA_PASSWORD="$$DB_PASSWORD"
+      echo "SQL Server is starting for database $${DB_NAME:-unknown}."
+      exec /opt/mssql/bin/sqlservr
+  environment:
+    MSSQL_MEMORY_LIMIT_MB: "512"
+  ulimits:
+    nofile:
+      soft: 65536
+      hard: 65536
+  healthcheck:
+    test: ["CMD-SHELL", "grep -q 'ready for client connections' /var/opt/mssql/log/errorlog"]
+    interval: 5s
+    timeout: 3s
+    retries: 30
+    start_period: 25s
+  logging: *default-logging
+  deploy:
+    resources:
+      limits:
+        cpus: "1.0"
+        memory: 2560m
+
+x-api: &api
+  restart: unless-stopped
+  init: true
+  stop_grace_period: 15s
+  networks:
+    - ecommerce
+  security_opt:
+    - no-new-privileges:true
+  entrypoint: ["/bin/bash", "-c"]
+  command:
+    - |
+      set -euo pipefail
+      echo "Waiting for $$DB_HOST:$$DB_PORT (database $$DB_NAME)..."
+      ready=0
+      i=0
+      while [ "$$i" -lt 30 ]; do
+        if (exec 3<>"/dev/tcp/$$DB_HOST/$$DB_PORT") 2>/dev/null; then
+          ready=1
+          break
+        fi
+        i=$$((i + 1))
+        sleep 2
+      done
+      if [ "$$ready" -ne 1 ]; then
+        echo "Database $$DB_HOST:$$DB_PORT did not accept connections in time." >&2
+        exit 1
+      fi
+      export ConnectionStrings__DefaultConnection="$$(printf 'Server=%s,%s;Database=%s;User Id=%s;Password=%s;TrustServerCertificate=True;Encrypt=True;MultipleActiveResultSets=True;' "$$DB_HOST" "$$DB_PORT" "$$DB_NAME" "$$DB_USER" "$$DB_PASSWORD")"
+      echo "Starting $$DLL_NAME against $$DB_HOST,$$DB_PORT / $$DB_NAME."
+      exec dotnet "$$DLL_NAME"
+  healthcheck:
+    test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080'"]
+    interval: 10s
+    timeout: 3s
+    retries: 18
+    start_period: 20s
+  logging: *default-logging
+  deploy:
+    resources:
+      limits:
+        cpus: "0.75"
+        memory: 512m
+
+x-api-env: &api-env
+  ASPNETCORE_ENVIRONMENT: Development
+  ASPNETCORE_URLS: http://+:8080
+  DB_PORT: "1433"
+
+services:
+  catalog-db:
+    <<: *sqlserver
+    container_name: ecommerce-catalog-db
+    hostname: catalog-db
+    env_file:
+      - ./src/Services/Catalog/.env
+    ports:
+      - "127.0.0.1:1436:1433"
+    volumes:
+      - catalog-db-data:/var/opt/mssql
+    labels:
+      com.ecommerce.service: catalog
+      com.ecommerce.tier: data
+
+  catalog-api:
+    <<: *api
+    container_name: ecommerce-catalog-api
+    hostname: catalog-api
+    build:
+      context: .
+      dockerfile: src/Services/Catalog/Catalog.API/Dockerfile
+    env_file:
+      - ./src/Services/Catalog/.env
+    environment:
+      <<: *api-env
+      DLL_NAME: Catalog.API.dll
+      DB_HOST: catalog-db
+    ports:
+      - "127.0.0.1:5299:8080"
+    depends_on:
+      catalog-db:
+        condition: service_healthy
+        restart: true
+    labels:
+      com.ecommerce.service: catalog
+      com.ecommerce.tier: api
+
+  basket-db:
+    <<: *sqlserver
+    container_name: ecommerce-basket-db
+    hostname: basket-db
+    env_file:
+      - ./src/Services/Basket/.env
+    ports:
+      - "127.0.0.1:1435:1433"
+    volumes:
+      - basket-db-data:/var/opt/mssql
+    labels:
+      com.ecommerce.service: basket
+      com.ecommerce.tier: data
+
+  basket-api:
+    <<: *api
+    container_name: ecommerce-basket-api
+    hostname: basket-api
+    build:
+      context: .
+      dockerfile: src/Services/Basket/Basket.API/Dockerfile
+    env_file:
+      - ./src/Services/Basket/.env
+    environment:
+      <<: *api-env
+      DLL_NAME: Basket.API.dll
+      DB_HOST: basket-db
+    ports:
+      - "127.0.0.1:5260:8080"
+    depends_on:
+      basket-db:
+        condition: service_healthy
+        restart: true
+    labels:
+      com.ecommerce.service: basket
+      com.ecommerce.tier: api
+
+  ordering-db:
+    <<: *sqlserver
+    container_name: ecommerce-ordering-db
+    hostname: ordering-db
+    env_file:
+      - ./src/Services/Ordering/.env
+    ports:
+      - "127.0.0.1:1437:1433"
+    volumes:
+      - ordering-db-data:/var/opt/mssql
+    labels:
+      com.ecommerce.service: ordering
+      com.ecommerce.tier: data
+
+  ordering-api:
+    <<: *api
+    container_name: ecommerce-ordering-api
+    hostname: ordering-api
+    build:
+      context: .
+      dockerfile: src/Services/Ordering/Ordering.API/Dockerfile
+    env_file:
+      - ./src/Services/Ordering/.env
+    environment:
+      <<: *api-env
+      DLL_NAME: Ordering.API.dll
+      DB_HOST: ordering-db
+    ports:
+      - "127.0.0.1:5257:8080"
+    depends_on:
+      ordering-db:
+        condition: service_healthy
+        restart: true
+    labels:
+      com.ecommerce.service: ordering
+      com.ecommerce.tier: api
+
+networks:
+  ecommerce:
+    name: ecommerce
+    driver: bridge
+
+volumes:
+  catalog-db-data:
+    name: ecommerce-catalog-db
+  basket-db-data:
+    name: ecommerce-basket-db
+  ordering-db-data:
+    name: ecommerce-ordering-db
