@@ -9,4 +9,6 @@ public class AppDbContext : DbContext
     {
     }
     public DbSet<User> Users { get; set; } = null!;
+    public DbSet<ShoppingCart> ShoppingCarts { get; set; } = null!;
+    public DbSet<ShoppingCartItem> ShoppingCartItems { get; set; } = null!;
 }
