@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Basket.Infrastructure.Data.Migrations
 {
-    [DbContext(typeof(AppDbContext))]
+    [DbContext(typeof(BasketDbContext))]
     [Migration("20261102005523_AddPCartsTable")]
     partial class AddPCartsTable
     {

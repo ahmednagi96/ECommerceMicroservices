@@ -7,7 +7,7 @@ namespace Basket.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UsersController(AppDbContext dbContext) : ControllerBase
+public class UsersController(BasketDbContext dbContext) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<List<User>>> Get()

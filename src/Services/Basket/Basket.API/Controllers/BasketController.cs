@@ -11,7 +11,7 @@ namespace Basket.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BasketController(ICatalogService catalogService, AppDbContext dbContext) : ControllerBase
+public class BasketController(ICatalogService catalogService, BasketDbContext dbContext) : ControllerBase
 {
     [HttpPost("items")]
     public async Task<IActionResult> AddItemToBasket(AddItemRequestDTO request, CancellationToken cancellationToken)

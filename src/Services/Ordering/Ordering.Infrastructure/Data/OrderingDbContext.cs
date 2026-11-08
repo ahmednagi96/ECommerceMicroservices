@@ -3,9 +3,9 @@ using Ordering.Domain.Entities;
 
 namespace Ordering.Infrastructure.Data;
 
-public class AppDbContext : DbContext
+public class OrderingDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    public OrderingDbContext(DbContextOptions<OrderingDbContext> options) : base(options)
     {
     }
     public DbSet<User> Users { get; set; } = null!;

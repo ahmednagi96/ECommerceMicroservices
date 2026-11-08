@@ -12,7 +12,7 @@ builder.Services.AddSwaggerGen();
 
 
 // register db context
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddDbContext<OrderingDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")!));
 
 
@@ -27,7 +27,7 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     try
     {
-        var context = services.GetRequiredService<AppDbContext>();
+        var context = services.GetRequiredService<OrderingDbContext>();
         // السطر ده بيعمل نفس وظيفة dotnet ef database update بالظبط!
         await context.Database.MigrateAsync();
     }
