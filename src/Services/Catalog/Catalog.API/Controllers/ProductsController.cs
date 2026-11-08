@@ -5,7 +5,7 @@ namespace Catalog.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 
-public class ProductsController(AppDbContext dbContext) : ControllerBase
+public class ProductsController(CatalogDbContext dbContext) : ControllerBase
 {
     [HttpGet("{id}")]
     public async Task<IActionResult> GetProductById(int id, CancellationToken cancellationToken)

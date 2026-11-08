@@ -24,5 +24,8 @@
     <!-- EF Core SqlServer -> Microsoft.Data.SqlClient 6.1.7 -> Pkcs 9.0.11
          (GHSA-846f-f764-76mx, high). Remove once SqlClient ships a fixed one. -->
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
+
+      <!--health check --> 
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.0" />
   </ItemGroup>
 </Project>

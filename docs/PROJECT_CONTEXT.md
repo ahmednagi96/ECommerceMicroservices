@@ -38,13 +38,13 @@ ECommerceMicroservices/
     │   ├── .env / .env.example
     │   ├── Catalog.API/            Controllers, Program.cs, Dockerfile
     │   ├── Catalog.Domain/         Entities
-    │   └── Catalog.Infrastructure/ Data/AppDbContext.cs + Migrations
+    │   └── Catalog.Infrastructure/ Data/CatalogDbContext.cs + Migrations
     ├── Basket/
     │   ├── .env / .env.example
     │   ├── Basket.API/
     │   ├── Basket.Application/     DTOs (مثل AddItemRequestDTO)
     │   ├── Basket.Domain/          Entities + Contracts (ICatalogService)
-    │   └── Basket.Infrastructure/  AppDbContext + Migrations + Services/CatalogService.cs
+    │   └── Basket.Infrastructure/  BasketDbContext + Migrations + Services/CatalogService.cs
     └── Ordering/
         ├── .env / .env.example
         ├── Ordering.API/
@@ -61,7 +61,7 @@ API  ──►  Infrastructure  ──►  Domain
 
 - **Domain**: الكيانات (Entities) والعقود (Interfaces). مش بيعتمد على أي حاجة.
 - **Application**: الـ DTOs. موجودة في Basket بس لحد دلوقتي.
-- **Infrastructure**: EF Core و `AppDbContext` والـ Migrations، والتنفيذ الفعلي للعقود (زي `CatalogService`).
+- **Infrastructure**: EF Core و `{Service}DbContext` (زي `CatalogDbContext`) والـ Migrations، والتنفيذ الفعلي للعقود (زي `CatalogService`).
 - **API**: الـ Controllers و `Program.cs` (تسجيل الخدمات في الـ DI، والـ Swagger، والـ Migration التلقائي).
 
 ---

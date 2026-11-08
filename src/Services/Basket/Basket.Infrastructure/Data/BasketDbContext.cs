@@ -3,9 +3,9 @@ using Basket.Domain.Entities;
 
 namespace Basket.Infrastructure.Data;
 
-public class AppDbContext : DbContext
+public class BasketDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    public BasketDbContext(DbContextOptions<BasketDbContext> options) : base(options)
     {
     }
     public DbSet<User> Users { get; set; } = null!;
