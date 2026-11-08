@@ -2,6 +2,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
+# 0. ملفات الإعدادات المركزية (نسخة الإطار ونسخ الحزم) قبل الـ restore
+COPY ["Directory.Build.props", "Directory.Packages.props", "./"]
+
 # 1. ننسخ ملفات المشاريع الموجودة فعليًا (API + Domain + Infrastructure)
 COPY ["src/Services/Catalog/Catalog.API/Catalog.API.csproj", "src/Services/Catalog/Catalog.API/"]
 COPY ["src/Services/Catalog/Catalog.Domain/Catalog.Domain.csproj", "src/Services/Catalog/Catalog.Domain/"]
