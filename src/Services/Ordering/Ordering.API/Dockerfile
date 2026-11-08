@@ -1,6 +1,9 @@
 # المرحلة الأولى: ورشة البناء والترجمة باستخدام قالب التطوير الشامل
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /app
+
+# 0. ملفات الإعدادات المركزية (نسخة الإطار ونسخ الحزم) قبل الـ restore
+COPY ["Directory.Build.props", "Directory.Packages.props", "./"]
 
 # 1. ننسخ ملفات المشاريع الموجودة فعليًا (API + Domain + Infrastructure)
 COPY ["src/Services/Ordering/Ordering.API/Ordering.API.csproj", "src/Services/Ordering/Ordering.API/"]
@@ -20,7 +23,7 @@ RUN dotnet publish "Ordering.API.csproj" -c Release -o /app/publish /p:UseAppHos
 # ------------------------------------------------------------------------
 
 # المرحلة الثانية: قالب التشغيل الخفيف النهائي
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 EXPOSE 8080
 

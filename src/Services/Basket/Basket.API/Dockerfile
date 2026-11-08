@@ -1,10 +1,14 @@
 # المرحلة الأولى: ورشة البناء والترجمة باستخدام قالب التطوير الشامل
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /app
+
+# 0. ملفات الإعدادات المركزية (نسخة الإطار ونسخ الحزم) قبل الـ restore
+COPY ["Directory.Build.props", "Directory.Packages.props", "./"]
 
 # 1. ننسخ ملفات المشاريع الموجودة فعليًا (API + Domain + Infrastructure)
 COPY ["src/Services/Basket/Basket.API/Basket.API.csproj", "src/Services/Basket/Basket.API/"]
 COPY ["src/Services/Basket/Basket.Domain/Basket.Domain.csproj", "src/Services/Basket/Basket.Domain/"]
+COPY ["src/Services/Basket/Basket.Application/Basket.Application.csproj", "src/Services/Basket/Basket.Application/"]
 COPY ["src/Services/Basket/Basket.Infrastructure/Basket.Infrastructure.csproj", "src/Services/Basket/Basket.Infrastructure/"]
 
 # 2. نحمل المكتبات لمشروع الواجهة البرمجية (وهو سيحمل مكتبات المشاريع الثلاثة المربوطة به تلقائياً)
@@ -20,7 +24,7 @@ RUN dotnet publish "Basket.API.csproj" -c Release -o /app/publish /p:UseAppHost=
 # ------------------------------------------------------------------------
 
 # المرحلة الثانية: قالب التشغيل الخفيف النهائي
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 EXPOSE 8080
 
