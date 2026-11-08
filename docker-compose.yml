@@ -154,6 +154,12 @@ services:
     labels:
       com.ecommerce.service: catalog
       com.ecommerce.tier: api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 10s       # يفحص كل 10 ثواني
+      timeout: 3s         # لو مردش في 3 ثواني يبقى فشل
+      retries: 5          # 5 مرات فشل ورا بعض = unhealthy
+      start_period: 20s   # فترة سماح في الأول عشان الـ Migration    
 
   basket-db:
     <<: *sqlserver
@@ -186,11 +192,17 @@ services:
       - "127.0.0.1:5260:8080"
     depends_on:
       basket-db:
-        condition: service_healthy
+        condition: service_healthy   # Basket مش هتقوم غير لما Catalog تبقى جاهزة فعلًا
         restart: true
     labels:
       com.ecommerce.service: basket
       com.ecommerce.tier: api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s  
 
   ordering-db:
     <<: *sqlserver
@@ -228,6 +240,12 @@ services:
     labels:
       com.ecommerce.service: ordering
       com.ecommerce.tier: api
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s  
 
 networks:
   ecommerce:

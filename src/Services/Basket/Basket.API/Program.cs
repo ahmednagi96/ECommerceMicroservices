@@ -1,8 +1,11 @@
-using Basket.Infrastructure.Data;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Http.Resilience;
 using Basket.Domain.Contracts;
 using Basket.Infrastructure.Services;
-using Microsoft.Extensions.Http.Resilience;
+using Basket.Infrastructure.Data;
+
 
 LoadLocalDotEnv();
 
@@ -33,6 +36,10 @@ builder.Services.AddDbContext<BasketDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")!));
 
 
+   // check if api connected to db or not -->
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"])
+    .AddDbContextCheck<BasketDbContext>("basket-db", tags: ["ready"]);
 
 var app = builder.Build();
 
@@ -69,6 +76,15 @@ if (app.Environment.IsDevelopment())
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("live")
+});
+
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready")
+});
 
 app.Run();
 
