@@ -5,15 +5,14 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
 
     <!-- One variable per framework-bound family: upgrade = edit one line -->
-    <EfCoreVersion>8.0.33</EfCoreVersion>
-    <AspNetCoreVersion>8.0.33</AspNetCoreVersion>
+    <EfCoreVersion>10.0.14</EfCoreVersion>
+    <AspNetCoreVersion>10.0.14</AspNetCoreVersion>
   </PropertyGroup>
 
   <ItemGroup Label="Framework-bound">
     <PackageVersion Include="Microsoft.EntityFrameworkCore"           Version="$(EfCoreVersion)" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="$(EfCoreVersion)" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design"    Version="$(EfCoreVersion)" />
-    <PackageVersion Include="Microsoft.AspNetCore.OpenApi"            Version="$(AspNetCoreVersion)" />
   </ItemGroup>
 
   <ItemGroup Label="Third-party">
@@ -22,7 +21,8 @@
   </ItemGroup>
 
   <ItemGroup Label="Security pins (transitive)">
-    <!-- Example: pin a vulnerable transitive dependency to its patched version -->
-    <!-- <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="x.y.z" /> -->
+    <!-- EF Core SqlServer -> Microsoft.Data.SqlClient 6.1.7 -> Pkcs 9.0.11
+         (GHSA-846f-f764-76mx, high). Remove once SqlClient ships a fixed one. -->
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
   </ItemGroup>
 </Project>

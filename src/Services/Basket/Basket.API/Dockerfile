@@ -1,5 +1,5 @@
 # المرحلة الأولى: ورشة البناء والترجمة باستخدام قالب التطوير الشامل
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /app
 
 # 0. ملفات الإعدادات المركزية (نسخة الإطار ونسخ الحزم) قبل الـ restore
@@ -24,7 +24,7 @@ RUN dotnet publish "Basket.API.csproj" -c Release -o /app/publish /p:UseAppHost=
 # ------------------------------------------------------------------------
 
 # المرحلة الثانية: قالب التشغيل الخفيف النهائي
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 EXPOSE 8080
 
