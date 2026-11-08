@@ -27,6 +27,11 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 EXPOSE 8080
 
+# ✅ جديد: نثبت curl عشان الـ healthcheck في docker-compose يقدر يفحص /health/ready
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # ننسخ الملفات النهائية المترجمة من ورشة البناء
 COPY --from=build /app/publish .
 

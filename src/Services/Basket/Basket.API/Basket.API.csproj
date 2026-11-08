@@ -7,11 +7,13 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Basket.Infrastructure\Basket.Infrastructure.csproj" />
     <ProjectReference Include="..\Basket.Application\Basket.Application.csproj" />
+    
   </ItemGroup>
 
 </Project>
