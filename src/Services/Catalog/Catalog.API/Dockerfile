@@ -5,10 +5,15 @@ WORKDIR /app
 # 0. ملفات الإعدادات المركزية (نسخة الإطار ونسخ الحزم) قبل الـ restore
 COPY ["Directory.Build.props", "Directory.Packages.props", "./"]
 
+
 # 1. ننسخ ملفات المشاريع الموجودة فعليًا (API + Domain + Infrastructure)
 COPY ["src/Services/Catalog/Catalog.API/Catalog.API.csproj", "src/Services/Catalog/Catalog.API/"]
 COPY ["src/Services/Catalog/Catalog.Domain/Catalog.Domain.csproj", "src/Services/Catalog/Catalog.Domain/"]
 COPY ["src/Services/Catalog/Catalog.Infrastructure/Catalog.Infrastructure.csproj", "src/Services/Catalog/Catalog.Infrastructure/"]
+
+
+
+COPY ["src/BuildingBlocks/BuildingBlocks/BuildingBlocks.csproj", "src/BuildingBlocks/BuildingBlocks/"]
 
 # 2. نحمل المكتبات لمشروع الواجهة البرمجية (وهو سيحمل مكتبات المشاريع الثلاثة المربوطة به تلقائياً)
 RUN dotnet restore "src/Services/Catalog/Catalog.API/Catalog.API.csproj"

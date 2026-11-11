@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Storage;
-
-namespace Ordering.API.ErrorHandling;
+using Microsoft.Extensions.Logging;
+namespace BuildingBlocks.ErrorHandling;
 
 public sealed class GlobalExceptionHandler(
     IProblemDetailsService problemDetailsService,

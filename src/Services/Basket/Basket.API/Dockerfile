@@ -11,6 +11,9 @@ COPY ["src/Services/Basket/Basket.Domain/Basket.Domain.csproj", "src/Services/Ba
 COPY ["src/Services/Basket/Basket.Application/Basket.Application.csproj", "src/Services/Basket/Basket.Application/"]
 COPY ["src/Services/Basket/Basket.Infrastructure/Basket.Infrastructure.csproj", "src/Services/Basket/Basket.Infrastructure/"]
 
+
+COPY ["src/BuildingBlocks/BuildingBlocks/BuildingBlocks.csproj", "src/BuildingBlocks/BuildingBlocks/"]
+
 # 2. نحمل المكتبات لمشروع الواجهة البرمجية (وهو سيحمل مكتبات المشاريع الثلاثة المربوطة به تلقائياً)
 RUN dotnet restore "src/Services/Basket/Basket.API/Basket.API.csproj"
 
