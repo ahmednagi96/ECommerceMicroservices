@@ -3,29 +3,25 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <!-- Let us pin vulnerable transitive packages from here -->
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
-
     <!-- One variable per framework-bound family: upgrade = edit one line -->
     <EfCoreVersion>10.0.14</EfCoreVersion>
     <AspNetCoreVersion>10.0.14</AspNetCoreVersion>
   </PropertyGroup>
-
   <ItemGroup Label="Framework-bound">
-    <PackageVersion Include="Microsoft.EntityFrameworkCore"           Version="$(EfCoreVersion)" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="$(EfCoreVersion)" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="$(EfCoreVersion)" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design"    Version="$(EfCoreVersion)" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="$(EfCoreVersion)" />
+    <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
   </ItemGroup>
-
   <ItemGroup Label="Third-party">
-    <PackageVersion Include="Swashbuckle.AspNetCore"               Version="6.6.2" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.11.0" />
   </ItemGroup>
-
   <ItemGroup Label="Security pins (transitive)">
     <!-- EF Core SqlServer -> Microsoft.Data.SqlClient 6.1.7 -> Pkcs 9.0.11
          (GHSA-846f-f764-76mx, high). Remove once SqlClient ships a fixed one. -->
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
-
-      <!--health check --> 
+    <!--health check -->
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.0" />
   </ItemGroup>
 </Project>

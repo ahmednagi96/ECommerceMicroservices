@@ -1,7 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using Basket.Domain.Contracts;
-namespace Basket.Infrastructure.Services;
+
+namespace Basket.Infrastructure.ExternalServices.Catalog;
 
 public class CatalogService(HttpClient httpClient) : ICatalogService
 {

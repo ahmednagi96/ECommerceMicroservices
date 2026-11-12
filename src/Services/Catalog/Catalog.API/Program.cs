@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
+using BuildingBlocks;
 using Catalog.Infrastructure.Data;
 
+LocalEnvLoader.LoadLocalDotEnv();   // ⭐ لو شغّلت المشروع على جهازك، حط سطر ConnectionStrings__DefaultConnection في ملف .env
 var builder = WebApplication.CreateBuilder(args);
 
+
+builder.AddServiceDefaults<CatalogDbContext>("Catalog");   // ⭐ بدل كل كود التسجيل القديم
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -16,36 +18,17 @@ builder.Services.AddSwaggerGen();
 
 // register db context
 builder.Services.AddDbContext<CatalogDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")!));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")!
+     , sql =>
+        sql.EnableRetryOnFailure() // دي عشان لو الداتا بيز وقعت فالنص يديك 503 بعد مايحاول كذا مره
+    ));
 
-
-//check if api connected to db or not
-builder.Services.AddHealthChecks()
-    // فحص "إنت صاحي؟" بيرجع Healthy على طول، لأن لو الكود ده اتنفذ يبقى البرنامج شغال
-    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"])
-    // فحص "إنت جاهز؟" بيجرب يكلم الداتابيز
-    .AddDbContextCheck<CatalogDbContext>("catalog-db", tags: ["ready"]);
 
 var app = builder.Build();
 
-// =====================================================================
-// 🌟 كود عمل Database Update (Migration) أوتوماتيك أول ما المشروع يشتغل
-// =====================================================================
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var context = services.GetRequiredService<CatalogDbContext>();
-        // السطر ده بيعمل نفس وظيفة dotnet ef database update بالظبط!
-        await context.Database.MigrateAsync();
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "حصل خطأ أثناء عمل Migration للداتابيز وقت التشغيل.");
-    }
-}
+app.UseServiceDefaults();                       // ⭐ بدل كود الـ middleware والـ health
+await app.MigrateDatabaseAsync<CatalogDbContext>();   // ⭐ بدل كود الـ migration
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -54,21 +37,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-//
-// 
-// app.UseHttpsRedirection();
 
+app.UseHttpsRedirection();
 app.UseAuthorization();
-
 app.MapControllers();
-app.MapHealthChecks("/health/live", new HealthCheckOptions
-{
-    Predicate = check => check.Tags.Contains("live")
-});
-
-app.MapHealthChecks("/health/ready", new HealthCheckOptions
-{
-    Predicate = check => check.Tags.Contains("ready")
-});
-
 app.Run();

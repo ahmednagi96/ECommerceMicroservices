@@ -1,9 +1,15 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using Ordering.Infrastructure.Data;
+using BuildingBlocks;
+LocalEnvLoader.LoadLocalDotEnv();   // ⭐ لو شغّلت المشروع على جهاز
+
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults<OrderingDbContext>("Ordering");   // ⭐ بدل كل كود التسجيل القديم
 
 // Add services to the container.
 
@@ -16,34 +22,16 @@ builder.Services.AddSwaggerGen();
 
 // register db context
 builder.Services.AddDbContext<OrderingDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")!));
-
-
-//check if api connected to db or not
-builder.Services.AddHealthChecks()
-    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"])
-    .AddDbContextCheck<OrderingDbContext>("ordering-db", tags: ["ready"]);
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")!
+     , sql =>
+        sql.EnableRetryOnFailure()
+    ));
 
 var app = builder.Build();
 
-// =====================================================================
-// 🌟 كود عمل Database Update (Migration) أوتوماتيك أول ما المشروع يشتغل
-// =====================================================================
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var context = services.GetRequiredService<OrderingDbContext>();
-        // السطر ده بيعمل نفس وظيفة dotnet ef database update بالظبط!
-        await context.Database.MigrateAsync();
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "حصل خطأ أثناء عمل Migration للداتابيز وقت التشغيل.");
-    }
-}
+app.UseServiceDefaults();                       // ⭐ بدل كود الـ middleware والـ health
+await app.MigrateDatabaseAsync<OrderingDbContext>();   // ⭐ بدل كود الـ migration
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -52,21 +40,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-//
-// 
-// app.UseHttpsRedirection();
 
+app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHealthChecks("/health/live", new HealthCheckOptions
-{
-    Predicate = check => check.Tags.Contains("live")
-});
-
-app.MapHealthChecks("/health/ready", new HealthCheckOptions
-{
-    Predicate = check => check.Tags.Contains("ready")
-});
-
 app.Run();

@@ -11,7 +11,7 @@ namespace Basket.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BasketController(ICatalogService catalogService, BasketDbContext dbContext) : ControllerBase
+public class BasketController(ICatalogService catalogService, BasketDbContext dbContext, ILogger<BasketController> logger) : ControllerBase
 {
     [HttpPost("items")]
     public async Task<IActionResult> AddItemToBasket(AddItemRequestDTO request, CancellationToken cancellationToken)
@@ -21,13 +21,19 @@ public class BasketController(ICatalogService catalogService, BasketDbContext db
         {
             product = await catalogService.GetProductByIdAsync(request.ProductId, cancellationToken);
         }
-        catch (Exception)
+       catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
         {
-            return StatusCode(503, "خدمة المعرض غير متاحة حالياً للتحقق من سعر المنتج، يرجى المحاولة بعد لحظات.");
+            logger.LogWarning(ex, "Catalog unavailable while adding product {ProductId}", request.ProductId);
+            return Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: "خدمة المعرض غير متاحة حالياً، يرجى المحاولة بعد لحظات.");
         }
+
         // ١. نسأل خدمة المعرض لحظياً عن بيانات المنتج وسعره الحقيقي
         if (product is null)
-            return NotFound($"المنتج برقم {request.ProductId} غير موجود في المعرض.");
+             return Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: $"المنتج برقم {request.ProductId} غير موجود في المعرض.");
         // ٢. نبحث في قاعدة بيانات السلة: هل العميل لديه سلة حالية؟
         var cart = await dbContext.ShoppingCarts
             .Include(c => c.Items)
