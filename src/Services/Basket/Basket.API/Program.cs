@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Http.Resilience;
-using Serilog;
 using Microsoft.Extensions.Options;
 using Basket.Domain.Contracts;
 using Basket.Infrastructure.ExternalServices.Catalog;
