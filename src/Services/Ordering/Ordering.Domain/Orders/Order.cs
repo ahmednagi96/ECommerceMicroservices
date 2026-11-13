@@ -1,4 +1,5 @@
 using Ordering.Domain.Exceptions;
+using Ordering.Domain.ValueObjects;
 namespace Ordering.Domain.Orders;
 
 public class Order
@@ -10,33 +11,40 @@ public class Order
     public OrderStatus Status { get; private set; }
     public DateTime CreatedAt { get; private set; }
 
+    public string Currency { get; private set; } = default!;
+    public Address ShippingAddress { get; private set; } = default!;
+
+
     public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
-    public decimal Total => _items.Sum(i => i.UnitPrice * i.Quantity);
+   public Money Total =>
+    _items.Aggregate(Money.Zero(Currency), (sum, item) => sum.Add(item.LineTotal));
 
     private Order() { } // EF Core
 
-    public static Order Create(string buyerId)
+    public static Order Create(string buyerId, Address shippingAddress, string currency)
     {
         if (string.IsNullOrWhiteSpace(buyerId))
             throw new DomainException("BuyerId is required.");
 
-        return new Order
+         return new Order
         {
             Id = Guid.NewGuid(),
             BuyerId = buyerId,
+            ShippingAddress = shippingAddress,
+            Currency = currency,
             Status = OrderStatus.Pending,
             CreatedAt = DateTime.UtcNow
         };
     }
 
-    public void AddItem(Guid productId, string name, decimal unitPrice, int quantity)
+    public void AddItem(Guid productId, string name, Money unitPrice, int quantity)
     {
         if (Status != OrderStatus.Pending)
             throw new DomainException("Cannot modify a non-pending order.");
         if (quantity <= 0)
             throw new DomainException("Quantity must be greater than zero.");
-        if (unitPrice < 0)
-            throw new DomainException("Price cannot be negative.");
+        if (unitPrice.Currency != Currency)
+        throw new DomainException("Item currency must match order currency.");
 
         var existing = _items.FirstOrDefault(i => i.ProductId == productId);
         if (existing is not null)
@@ -72,5 +80,15 @@ public class Order
             ?? throw new DomainException("Item not found in the order.");
 
         _items.Remove(existing);
+    }
+
+   public void UpdateShippingAddress(Address newAddress)
+    {
+        ArgumentNullException.ThrowIfNull(newAddress);
+
+        if (Status != OrderStatus.Pending)
+            throw new DomainException("Cannot modify a non-pending order.");
+
+        ShippingAddress = newAddress;
     }
 }
