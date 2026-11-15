@@ -1,13 +1,12 @@
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
-using Serilog;
 using Ordering.Infrastructure.Data;
 using BuildingBlocks;
 using Ordering.Application.Common;
 using Ordering.Application.Orders.EventHandlers;
 using Ordering.Domain.Orders.Events;
 using Ordering.Infrastructure.Events;
+using Ordering.Domain.Orders;
+using Ordering.Infrastructure.Repositories;
 LocalEnvLoader.LoadLocalDotEnv();   // ⭐ لو شغّلت المشروع على جهاز
 
 
@@ -34,7 +33,7 @@ builder.Services.AddDbContext<OrderingDbContext>(options =>
 builder.Services.AddScoped<DomainEventDispatcher>();
 builder.Services.AddScoped<IDomainEventHandler<OrderConfirmedDomainEvent>, OrderConfirmedHandler>();
 builder.Services.AddScoped<IDomainEventHandler<OrderCancelledDomainEvent>, OrderCancelledHandler>();    
-
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
 var app = builder.Build();
 

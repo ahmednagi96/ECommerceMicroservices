@@ -8,6 +8,8 @@ public class OrderingDbContext(
     DbContextOptions<OrderingDbContext> options,
     DomainEventDispatcher dispatcher) : DbContext(options)
 {
+    public DbSet<Order> Orders => Set<Order>();
+
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         // 1) نجمع الأحداث من كل الـ Aggregates
@@ -30,7 +32,7 @@ public class OrderingDbContext(
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Order>().Ignore(o => o.DomainEvents); // مش عمود في الداتابيز
+       modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrderingDbContext).Assembly);
         // ...
     }
 }

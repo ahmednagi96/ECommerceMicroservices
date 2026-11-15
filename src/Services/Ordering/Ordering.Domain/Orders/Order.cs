@@ -8,7 +8,7 @@ public class Order : AggregateRoot
 {
     private readonly List<OrderItem> _items = new();
 
-    public Guid Id { get; private set; }
+    public OrderId Id { get; private set; }
     public string BuyerId { get; private set; } = default!;
     public OrderStatus Status { get; private set; }
     public DateTime CreatedAt { get; private set; }
@@ -30,7 +30,7 @@ public class Order : AggregateRoot
 
          return new Order
         {
-            Id = Guid.NewGuid(),
+            Id = OrderId.New(),
             BuyerId = buyerId,
             ShippingAddress = shippingAddress,
             Currency = currency,
