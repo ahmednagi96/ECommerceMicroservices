@@ -1,8 +1,10 @@
 using Ordering.Domain.Exceptions;
 using Ordering.Domain.ValueObjects;
+using Ordering.Domain.Common;
+using Ordering.Domain.Orders.Events;
 namespace Ordering.Domain.Orders;
 
-public class Order
+public class Order : AggregateRoot
 {
     private readonly List<OrderItem> _items = new();
 
@@ -61,14 +63,21 @@ public class Order
             throw new DomainException("Cannot confirm an empty order.");
 
         Status = OrderStatus.Confirmed;
+        
+        Raise(new OrderConfirmedDomainEvent(Id, BuyerId, Total)); // 📢
+
     }
 
     public void Cancel()
     {
+        if (Status == OrderStatus.Cancelled)
+            return; // ملغي أصلًا، مفيش حاجة جديدة حصلت، فمفيش حدث
+
         if (Status == OrderStatus.Shipped)
             throw new DomainException("Shipped orders cannot be cancelled.");
 
         Status = OrderStatus.Cancelled;
+        Raise(new OrderCancelledDomainEvent(Id, BuyerId));
     }
 
     public void RemoveItem(Guid productId)

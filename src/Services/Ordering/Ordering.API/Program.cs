@@ -4,6 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Ordering.Infrastructure.Data;
 using BuildingBlocks;
+using Ordering.Application.Common;
+using Ordering.Application.Orders.EventHandlers;
+using Ordering.Domain.Orders.Events;
+using Ordering.Infrastructure.Events;
 LocalEnvLoader.LoadLocalDotEnv();   // ⭐ لو شغّلت المشروع على جهاز
 
 
@@ -26,6 +30,11 @@ builder.Services.AddDbContext<OrderingDbContext>(options =>
      , sql =>
         sql.EnableRetryOnFailure()
     ));
+
+builder.Services.AddScoped<DomainEventDispatcher>();
+builder.Services.AddScoped<IDomainEventHandler<OrderConfirmedDomainEvent>, OrderConfirmedHandler>();
+builder.Services.AddScoped<IDomainEventHandler<OrderCancelledDomainEvent>, OrderCancelledHandler>();    
+
 
 var app = builder.Build();
 

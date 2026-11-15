@@ -5,15 +5,13 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Serilog.AspNetCore" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Ordering.Infrastructure\Ordering.Infrastructure.csproj" />
-    <ProjectReference Include="..\Ordering.Domain\Ordering.Domain.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\BuildingBlocks\BuildingBlocks.csproj" />
+    <ProjectReference Include="..\Ordering.Application\Ordering.Application.csproj" />
   </ItemGroup>
 
 </Project>
