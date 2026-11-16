@@ -7,6 +7,7 @@ using Ordering.Domain.Orders.Events;
 using Ordering.Infrastructure.Events;
 using Ordering.Domain.Orders;
 using Ordering.Infrastructure.Repositories;
+using Ordering.Infrastructure.Data.Seed;
 LocalEnvLoader.LoadLocalDotEnv();   // ⭐ لو شغّلت المشروع على جهاز
 
 
@@ -39,6 +40,14 @@ var app = builder.Build();
 
 app.UseServiceDefaults();                       // ⭐ بدل كود الـ middleware والـ health
 await app.MigrateDatabaseAsync<OrderingDbContext>();   // ⭐ بدل كود الـ migration
+
+// 🌱 Seed: بعد الـ Migration (لازم الجداول تكون موجودة)، وفي الـ Development بس
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
+    await OrderingDbSeeder.SeedAsync(db, app.Logger);
+}
 
 
 // Configure the HTTP request pipeline.
