@@ -1,12 +1,38 @@
+
 using Microsoft.EntityFrameworkCore;
-using Ordering.Domain.Entities;
-
+using Ordering.Domain.Orders;
+using Ordering.Domain.Common;
+using Ordering.Infrastructure.Events;
 namespace Ordering.Infrastructure.Data;
-
-public class OrderingDbContext : DbContext
+public class OrderingDbContext(
+    DbContextOptions<OrderingDbContext> options,
+    DomainEventDispatcher dispatcher) : DbContext(options)
 {
-    public OrderingDbContext(DbContextOptions<OrderingDbContext> options) : base(options)
+    public DbSet<Order> Orders => Set<Order>();
+
+    public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
+        // 1) نجمع الأحداث من كل الـ Aggregates
+        var aggregates = ChangeTracker.Entries<AggregateRoot>()
+            .Select(e => e.Entity)
+            .Where(a => a.DomainEvents.Count != 0)
+            .ToList();
+
+        var events = aggregates.SelectMany(a => a.DomainEvents).ToList();
+        aggregates.ForEach(a => a.ClearDomainEvents());
+
+        // 2) نحفظ الأول
+        var result = await base.SaveChangesAsync(ct);
+
+        // 3) نوزع بعد ما الحفظ نجح
+        await dispatcher.DispatchAsync(events, ct);
+
+        return result;
     }
-    public DbSet<User> Users { get; set; } = null!;
-}   
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+       modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrderingDbContext).Assembly);
+        // ...
+    }
+}

@@ -23,5 +23,7 @@
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
     <!--health check -->
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.0" />
+
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.14" />
   </ItemGroup>
 </Project>

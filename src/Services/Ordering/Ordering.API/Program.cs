@@ -1,9 +1,13 @@
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
-using Serilog;
 using Ordering.Infrastructure.Data;
 using BuildingBlocks;
+using Ordering.Application.Common;
+using Ordering.Application.Orders.EventHandlers;
+using Ordering.Domain.Orders.Events;
+using Ordering.Infrastructure.Events;
+using Ordering.Domain.Orders;
+using Ordering.Infrastructure.Repositories;
+using Ordering.Infrastructure.Data.Seed;
 LocalEnvLoader.LoadLocalDotEnv();   // ⭐ لو شغّلت المشروع على جهاز
 
 
@@ -27,10 +31,23 @@ builder.Services.AddDbContext<OrderingDbContext>(options =>
         sql.EnableRetryOnFailure()
     ));
 
+builder.Services.AddScoped<DomainEventDispatcher>();
+builder.Services.AddScoped<IDomainEventHandler<OrderConfirmedDomainEvent>, OrderConfirmedHandler>();
+builder.Services.AddScoped<IDomainEventHandler<OrderCancelledDomainEvent>, OrderCancelledHandler>();    
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+
 var app = builder.Build();
 
 app.UseServiceDefaults();                       // ⭐ بدل كود الـ middleware والـ health
 await app.MigrateDatabaseAsync<OrderingDbContext>();   // ⭐ بدل كود الـ migration
+
+// 🌱 Seed: بعد الـ Migration (لازم الجداول تكون موجودة)، وفي الـ Development بس
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<OrderingDbContext>();
+    await OrderingDbSeeder.SeedAsync(db, app.Logger);
+}
 
 
 // Configure the HTTP request pipeline.
