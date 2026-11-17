@@ -247,6 +247,25 @@ services:
       retries: 5
       start_period: 20s  
 
+  rabbitmq:
+    image: rabbitmq:4-management      # management = فيه لوحة تحكم
+    container_name: rabbitmq
+    env_file:
+      - ./rabbitmq.env
+    ports:
+      - "5672:5672"     # البورت اللي الخدمات بتكلمه (AMQP)
+      - "15672:15672"   # لوحة التحكم في المتصفح
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq   # الرسائل متضيعش لو الكونتينر اتقفل
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ecommerce
+
+
 networks:
   ecommerce:
     name: ecommerce
@@ -259,3 +278,5 @@ volumes:
     name: ecommerce-basket-db
   ordering-db-data:
     name: ecommerce-ordering-db
+  rabbitmq_data:
+    name: ecommerce-rabbitmq
