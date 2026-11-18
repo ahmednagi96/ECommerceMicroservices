@@ -7,6 +7,7 @@ using Basket.Domain.Contracts;
 using Basket.Infrastructure.ExternalServices.Catalog;
 using Basket.Infrastructure.Data;
 using BuildingBlocks;
+using BuildingBlocks.Messaging;
 LocalEnvLoader.LoadLocalDotEnv();   // ⭐ لو شغّلت المشروع على جهازك، حط سطر CatalogClient__BaseUrl في ملف .env
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,7 +41,7 @@ builder.Services.AddDbContext<BasketDbContext>(options =>
 
 
 builder.AddServiceDefaults<BasketDbContext>("Basket");   // ⭐ سجل كل حاجة من اللوجز وفحص الصحة وشكل الأخطاء
-
+builder.Services.AddRabbitMqEventBus();   // ⭐ سجل كل حاجة من اللوجز وفحص الصحة وشكل الأخطاء
 
 var app = builder.Build();
 

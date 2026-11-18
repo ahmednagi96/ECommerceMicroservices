@@ -8,6 +8,9 @@ using Ordering.Infrastructure.Events;
 using Ordering.Domain.Orders;
 using Ordering.Infrastructure.Repositories;
 using Ordering.Infrastructure.Data.Seed;
+using BuildingBlocks.Messaging;
+using BuildingBlocks.Contracts.Basket;
+using Ordering.API.IntegrationEvents;
 LocalEnvLoader.LoadLocalDotEnv();   // ⭐ لو شغّلت المشروع على جهاز
 
 
@@ -36,6 +39,9 @@ builder.Services.AddScoped<IDomainEventHandler<OrderConfirmedDomainEvent>, Order
 builder.Services.AddScoped<IDomainEventHandler<OrderCancelledDomainEvent>, OrderCancelledHandler>();    
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
+
+builder.Services.AddRabbitMqEventBus();
+builder.Services.AddEventHandler<BasketCheckedOutIntegrationEvent, BasketCheckedOutHandler>("ordering");
 var app = builder.Build();
 
 app.UseServiceDefaults();                       // ⭐ بدل كود الـ middleware والـ health

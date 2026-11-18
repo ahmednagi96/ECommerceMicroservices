@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Basket.Application.DTOs.Items.Requests;
 using Basket.Infrastructure.Data;
+using BuildingBlocks.Messaging;
+using Basket.Application.DTOs.Checkout.Requests;
+using BuildingBlocks.Contracts.Basket;
 namespace Basket.API.Controllers;
 
 
@@ -11,7 +14,9 @@ namespace Basket.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BasketController(ICatalogService catalogService, BasketDbContext dbContext, ILogger<BasketController> logger) : ControllerBase
+public class BasketController(ICatalogService catalogService, BasketDbContext dbContext
+, IEventBus eventBus
+, ILogger<BasketController> logger) : ControllerBase
 {
     [HttpPost("items")]
     public async Task<IActionResult> AddItemToBasket(AddItemRequestDTO request, CancellationToken cancellationToken)
@@ -67,4 +72,39 @@ public class BasketController(ICatalogService catalogService, BasketDbContext db
         await dbContext.SaveChangesAsync(cancellationToken);
         return Ok(cart);
     }
+
+
+
+    [HttpPost("checkout")]
+public async Task<IActionResult> Checkout(CheckoutRequestDTO request, CancellationToken cancellationToken)
+{
+    // 1) هات السلة
+    var cart = await dbContext.ShoppingCarts
+        .Include(c => c.Items)
+        .FirstOrDefaultAsync(c => c.UserName == request.UserName, cancellationToken);
+
+    if (cart is null || cart.Items.Count == 0)
+        return Problem(statusCode: StatusCodes.Status400BadRequest, title: "السلة فاضية.");
+
+    // 2) حوّل السلة للعقد
+    var checkoutEvent = new BasketCheckedOutIntegrationEvent(
+        BuyerId: cart.UserName,
+        Currency: "EGP",
+        ShippingAddress: new CheckoutAddress(request.Street, request.City, request.Country, request.ZipCode),
+        Items: cart.Items
+            .Select(i => new CheckoutItem(i.ProductId, i.ProductName, i.Price, i.Quantity))
+            .ToList());
+
+    // 3) ابعت 📤
+    await eventBus.PublishAsync(checkoutEvent, cancellationToken);
+
+    // 4) امسح السلة (والمنتجات اللي جواها)
+    dbContext.ShoppingCartItems.RemoveRange(cart.Items);
+    dbContext.ShoppingCarts.Remove(cart);
+    await dbContext.SaveChangesAsync(cancellationToken);
+
+    // 5) "استلمنا طلبك" ✅
+    logger.LogInformation("Basket of {UserName} checked out. CheckoutId: {CheckoutId}", cart.UserName, checkoutEvent.Id);
+    return Accepted(new { checkoutId = checkoutEvent.Id });
+}
 }
