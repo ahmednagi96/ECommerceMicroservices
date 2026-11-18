@@ -6,7 +6,7 @@ namespace Basket.Infrastructure.ExternalServices.Catalog;
 
 public class CatalogService(HttpClient httpClient) : ICatalogService
 {
-    public async Task<CatalogProductDto?> GetProductByIdAsync(int  productId, CancellationToken cancellationToken = default)
+    public async Task<CatalogProductDto?> GetProductByIdAsync(Guid productId, CancellationToken cancellationToken = default)
     {
         // إرسال طلب قراءة إلى نقطة النهاية في خدمة المعرض
         var response = await httpClient.GetAsync($"/api/products/{productId}", cancellationToken);

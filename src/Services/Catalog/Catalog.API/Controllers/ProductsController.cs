@@ -7,8 +7,8 @@ namespace Catalog.API.Controllers;
 
 public class ProductsController(CatalogDbContext dbContext) : ControllerBase
 {
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetProductById(int id, CancellationToken cancellationToken)
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetProductById(Guid id, CancellationToken cancellationToken)
     {
         var product = await dbContext.Products.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
         if (product is null)
