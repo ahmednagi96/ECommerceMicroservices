@@ -145,6 +145,8 @@ services:
       <<: *api-env
       DLL_NAME: Catalog.API.dll
       DB_HOST: catalog-db
+      RabbitMq__HostName: rabbitmq        # 👈 اسم خدمة RabbitMQ في الـ compose
+
     ports:
       - "127.0.0.1:5299:8080"
     depends_on:
@@ -188,6 +190,7 @@ services:
       <<: *api-env
       DLL_NAME: Basket.API.dll
       DB_HOST: basket-db
+      RabbitMq__HostName: rabbitmq   # اسم خدمة RabbitMQ على شبكة Docker (localhost هنا = الحاوية نفسها)
     ports:
       - "127.0.0.1:5260:8080"
     depends_on:
@@ -220,7 +223,7 @@ services:
 
   ordering-api:
     <<: *api
-    container_name: ecommerce-ordering-api
+    #container_name: ecommerce-ordering-api
     hostname: ordering-api
     build:
       context: .
@@ -231,8 +234,9 @@ services:
       <<: *api-env
       DLL_NAME: Ordering.API.dll
       DB_HOST: ordering-db
+      RabbitMq__HostName: rabbitmq        # 👈 اسم خدمة RabbitMQ في الـ compose
     ports:
-      - "127.0.0.1:5257:8080"
+      - "127.0.0.1:5257-5259:8080"
     depends_on:
       ordering-db:
         condition: service_healthy

@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿Console.WriteLine("Hello, World!");
+
+/* using System.Text;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
@@ -62,4 +64,4 @@ consumer.ReceivedAsync += async (sender, ea) =>
 await channel.BasicConsumeAsync(queue, autoAck: false, consumer: consumer);
 
 Console.WriteLine("Waiting for messages... press Enter to exit");
-Console.ReadLine();
+Console.ReadLine(); */

@@ -7,6 +7,10 @@ using Basket.Domain.Contracts;
 using Basket.Infrastructure.ExternalServices.Catalog;
 using Basket.Infrastructure.Data;
 using BuildingBlocks;
+using Wolverine;
+using Wolverine.RabbitMQ;
+using BuildingBlocks.Contracts.Basket;
+
 LocalEnvLoader.LoadLocalDotEnv();   // ⭐ لو شغّلت المشروع على جهازك، حط سطر CatalogClient__BaseUrl في ملف .env
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,8 +44,23 @@ builder.Services.AddDbContext<BasketDbContext>(options =>
 
 
 builder.AddServiceDefaults<BasketDbContext>("Basket");   // ⭐ سجل كل حاجة من اللوجز وفحص الصحة وشكل الأخطاء
+//builder.Services.AddRabbitMqEventBus();   // ⭐ سجل كل حاجة من اللوجز وفحص الصحة وشكل الأخطاء
+builder.Host.UseWolverine(opts =>
+{
+    opts.UseRuntimeCompilation();   // 👈 الجديد
+    // 1) الاتصال (نفس متغيرات الـ .env)
+    opts.UseRabbitMq(f =>
+    {
+        f.HostName = builder.Configuration["RabbitMq:HostName"]!;
+        f.UserName = builder.Configuration["RabbitMq:UserName"]!;
+        f.Password = builder.Configuration["RabbitMq:Password"]!;
+    })
+    .AutoProvision();   // اعمل الـ Exchanges والـ Queues لوحدك
 
-
+    // 2) الرسالة دي تروح على الـ Exchange ده
+    opts.PublishMessage<BasketCheckedOutIntegrationEvent>()
+        .ToRabbitExchange("basket-checked-out");
+});
 var app = builder.Build();
 
 

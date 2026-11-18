@@ -1,0 +1,9 @@
+using BuildingBlocks.Contracts;
+
+namespace BuildingBlocks.Messaging;
+
+public interface IEventBus
+{
+    Task PublishAsync<TEvent>(TEvent @event, CancellationToken ct = default)
+        where TEvent : IntegrationEvent;
+}
