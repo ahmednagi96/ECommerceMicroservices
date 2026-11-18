@@ -61,3 +61,4 @@ Thumbs.db
 *.snk
 secrets.json
 appsettings.*.local.json
+rabbitmq.env
