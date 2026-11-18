@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿
+Console.WriteLine("Hello, World!");
+/* using System.Text;
 using System.Text.Json;
 using RabbitMQ.Client;
 
@@ -33,4 +35,4 @@ while (Console.ReadLine() is { } input && input != "exit")
         mandatory: false, basicProperties: props, body: body);
 
     Console.WriteLine($"📤 Sent: {input}");
-}
+} */

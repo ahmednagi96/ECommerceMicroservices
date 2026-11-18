@@ -7,6 +7,7 @@ using Basket.Infrastructure.Data;
 using BuildingBlocks.Messaging;
 using Basket.Application.DTOs.Checkout.Requests;
 using BuildingBlocks.Contracts.Basket;
+using Wolverine;
 namespace Basket.API.Controllers;
 
 
@@ -15,7 +16,8 @@ namespace Basket.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class BasketController(ICatalogService catalogService, BasketDbContext dbContext
-, IEventBus eventBus
+//, IEventBus eventBus
+ ,IMessageBus bus
 , ILogger<BasketController> logger) : ControllerBase
 {
     [HttpPost("items")]
@@ -96,7 +98,7 @@ public async Task<IActionResult> Checkout(CheckoutRequestDTO request, Cancellati
             .ToList());
 
     // 3) ابعت 📤
-    await eventBus.PublishAsync(checkoutEvent, cancellationToken);
+    await bus.PublishAsync(checkoutEvent);
 
     // 4) امسح السلة (والمنتجات اللي جواها)
     dbContext.ShoppingCartItems.RemoveRange(cart.Items);

@@ -8,9 +8,11 @@ namespace Ordering.API.IntegrationEvents;
 public sealed class BasketCheckedOutHandler(
     IOrderRepository orderRepository,
     ILogger<BasketCheckedOutHandler> logger)
-    : IIntegrationEventHandler<BasketCheckedOutIntegrationEvent>
+   // : IIntegrationEventHandler<BasketCheckedOutIntegrationEvent>
 {
-    public async Task HandleAsync(BasketCheckedOutIntegrationEvent e, CancellationToken ct)
+//    public async Task HandleAsync(BasketCheckedOutIntegrationEvent e, CancellationToken ct)
+      public async Task Handle(BasketCheckedOutIntegrationEvent e, CancellationToken ct)
+
     {
         // 1) العقد ← الدومين بتاعنا
         var address = Address.Create(

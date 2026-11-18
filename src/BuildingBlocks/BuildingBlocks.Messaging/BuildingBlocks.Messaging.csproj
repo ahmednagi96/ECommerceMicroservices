@@ -8,7 +8,9 @@
 
 <ItemGroup>
   <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  <PackageReference Include="RabbitMQ.Client" />
+  <!-- <PackageReference Include="RabbitMQ.Client" /> -->
   <ProjectReference Include="..\BuildingBlocks.Contracts\BuildingBlocks.Contracts.csproj" />
+  <PackageReference Include="WolverineFx.RabbitMQ" />
+  <PackageReference Include="WolverineFx.RuntimeCompilation" />
 </ItemGroup>
 </Project>
