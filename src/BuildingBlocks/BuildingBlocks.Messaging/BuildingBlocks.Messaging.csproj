@@ -12,5 +12,7 @@
   <ProjectReference Include="..\BuildingBlocks.Contracts\BuildingBlocks.Contracts.csproj" />
   <PackageReference Include="WolverineFx.RabbitMQ" />
   <PackageReference Include="WolverineFx.RuntimeCompilation" />
+  <PackageReference Include="WolverineFx.EntityFrameworkCore" />
+  <PackageReference Include="WolverineFx.SqlServer" />
 </ItemGroup>
 </Project>

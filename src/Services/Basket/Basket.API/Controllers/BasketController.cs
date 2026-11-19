@@ -8,6 +8,7 @@ using BuildingBlocks.Messaging;
 using Basket.Application.DTOs.Checkout.Requests;
 using BuildingBlocks.Contracts.Basket;
 using Wolverine;
+using Wolverine.EntityFrameworkCore;
 namespace Basket.API.Controllers;
 
 
@@ -15,7 +16,10 @@ namespace Basket.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BasketController(ICatalogService catalogService, BasketDbContext dbContext
+public class BasketController(ICatalogService catalogService,
+    [FromServices] IDbContextOutbox outbox,
+
+ BasketDbContext dbContext
 //, IEventBus eventBus
  ,IMessageBus bus
 , ILogger<BasketController> logger) : ControllerBase
@@ -97,13 +101,16 @@ public async Task<IActionResult> Checkout(CheckoutRequestDTO request, Cancellati
             .Select(i => new CheckoutItem(i.ProductId, i.ProductName, i.Price, i.Quantity))
             .ToList());
 
-    // 3) ابعت 📤
-    await bus.PublishAsync(checkoutEvent);
+      // 3) Use OUR DbContext, so everything is in one transaction
+    outbox.Enroll(dbContext);
 
-    // 4) امسح السلة (والمنتجات اللي جواها)
+// 4) Nothing is sent yet: Wolverine only keeps the message in memory
+    await outbox.PublishAsync(checkoutEvent);
+    // 5) امسح السلة (والمنتجات اللي جواها)
     dbContext.ShoppingCartItems.RemoveRange(cart.Items);
     dbContext.ShoppingCarts.Remove(cart);
-    await dbContext.SaveChangesAsync(cancellationToken);
+        // 6) ONE transaction (basket delete + message row), THEN send to RabbitMQ
+    await outbox.SaveChangesAndFlushMessagesAsync(cancellationToken);
 
     // 5) "استلمنا طلبك" ✅
     logger.LogInformation("Basket of {UserName} checked out. CheckoutId: {CheckoutId}", cart.UserName, checkoutEvent.Id);
