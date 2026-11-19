@@ -10,6 +10,7 @@ using BuildingBlocks;
 using Wolverine;
 using Wolverine.RabbitMQ;
 using BuildingBlocks.Contracts.Basket;
+using Basket.API.Outbox;
 
 LocalEnvLoader.LoadLocalDotEnv();   // ⭐ لو شغّلت المشروع على جهازك، حط سطر CatalogClient__BaseUrl في ملف .env
 var builder = WebApplication.CreateBuilder(args);
@@ -59,8 +60,10 @@ builder.Host.UseWolverine(opts =>
 
     // 2) الرسالة دي تروح على الـ Exchange ده
     opts.PublishMessage<BasketCheckedOutIntegrationEvent>()
-        .ToRabbitExchange("basket-checked-out");
+        .ToRabbitExchange("basket-checked-out")
+        .SendInline(); // PublishAsync waits until RabbitMQ has the message
 });
+builder.Services.AddHostedService<OutboxProcessor>();
 var app = builder.Build();
 
 
