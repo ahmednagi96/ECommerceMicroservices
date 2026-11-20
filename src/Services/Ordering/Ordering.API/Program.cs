@@ -37,8 +37,11 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 // register db context
 builder.Services.AddDbContext<OrderingDbContext>(
-    options => options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure()),
-    optionsLifetime: ServiceLifetime.Singleton);
+options => options.UseSqlServer(connectionString, sql =>
+    sql.EnableRetryOnFailure(
+        maxRetryCount: 2,
+        maxRetryDelay: TimeSpan.FromSeconds(2),
+        errorNumbersToAdd: null)),    optionsLifetime: ServiceLifetime.Singleton);
 
 builder.Services.AddScoped<DomainEventDispatcher>();
 builder.Services.AddScoped<IDomainEventHandler<OrderConfirmedDomainEvent>, OrderConfirmedHandler>();
@@ -73,9 +76,11 @@ builder.Host.UseWolverine(opts =>
     // 3) لو الخطأ "قاعدة بيزنس اتكسرت" ← الـ DLQ على طول، مفيش فايدة من المحاولة
     opts.OnException<DomainException>().MoveToErrorQueue();
 
-    // 4) أي خطأ تاني (غالبًا مؤقت) ← حاول تاني بعد 1 ثم 5 ثم 10 ثواني، وبعدها الـ DLQ
+    // 4) Anything else: short retries, then longer scheduled retries, then DLQ
     opts.OnException<Exception>()
-        .RetryWithCooldown(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10));
+    .RetryWithCooldown(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10))
+    .Then.ScheduleRetry(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(5))
+    .Then.MoveToErrorQueue();
 });
 // NEW 3) Create Wolverine's tables at startup
 builder.Services.AddResourceSetupOnStartup();
