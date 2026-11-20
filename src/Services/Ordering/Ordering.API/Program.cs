@@ -16,8 +16,8 @@ using Wolverine.RabbitMQ;
 using Wolverine.ErrorHandling;
 using Ordering.Domain.Exceptions;
 using JasperFx.CodeGeneration.Model;   // 👈 فيه ServiceLocationPolicy
-
-
+using Wolverine.SqlServer;
+using JasperFx.Resources;
 LocalEnvLoader.LoadLocalDotEnv();   // ⭐ لو شغّلت المشروع على جهاز
 
 
@@ -33,13 +33,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
 
 // register db context
-builder.Services.AddDbContext<OrderingDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")!
-     , sql =>
-        sql.EnableRetryOnFailure()
-    ));
+builder.Services.AddDbContext<OrderingDbContext>(
+    options => options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure()),
+    optionsLifetime: ServiceLifetime.Singleton);
 
 builder.Services.AddScoped<DomainEventDispatcher>();
 builder.Services.AddScoped<IDomainEventHandler<OrderConfirmedDomainEvent>, OrderConfirmedHandler>();
@@ -64,9 +63,12 @@ builder.Host.UseWolverine(opts =>
     })
     .DeclareExchange("basket-checked-out", ex => ex.BindQueue("ordering.basket-checked-out"))
     .AutoProvision();
+    // NEW 1) Store incoming messages in Ordering's own database (schema "wolverine")
+    opts.PersistMessagesWithSqlServer(connectionString, "wolverine");
 
-    // 2) اسمع على الطابور ده
-    opts.ListenToRabbitQueue("ordering.basket-checked-out");
+    // NEW 2) Listen through the durable inbox
+    opts.ListenToRabbitQueue("ordering.basket-checked-out")
+        .UseDurableInbox();
 
     // 3) لو الخطأ "قاعدة بيزنس اتكسرت" ← الـ DLQ على طول، مفيش فايدة من المحاولة
     opts.OnException<DomainException>().MoveToErrorQueue();
@@ -75,6 +77,8 @@ builder.Host.UseWolverine(opts =>
     opts.OnException<Exception>()
         .RetryWithCooldown(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10));
 });
+// NEW 3) Create Wolverine's tables at startup
+builder.Services.AddResourceSetupOnStartup();
 var app = builder.Build();
 
 app.UseServiceDefaults();                       // ⭐ بدل كود الـ middleware والـ health
