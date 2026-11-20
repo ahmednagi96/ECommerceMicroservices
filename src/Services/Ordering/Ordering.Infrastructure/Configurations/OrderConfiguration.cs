@@ -14,6 +14,9 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.Id)
             .HasConversion(id => id.Value, value => new OrderId(value));
 
+        // 7) One order per checkout (idempotency safety net)
+        builder.HasIndex(o => o.CheckoutId).IsUnique();    
+
         builder.Property(o => o.BuyerId).HasMaxLength(100).IsRequired();
         builder.Property(o => o.Currency).HasMaxLength(3).IsRequired();
 

@@ -15,6 +15,7 @@ public class Order : AggregateRoot
 
     public string Currency { get; private set; } = default!;
     public Address ShippingAddress { get; private set; } = default!;
+    public Guid? CheckoutId { get; private set; }   // The checkout that created this order
 
 
     public IReadOnlyCollection<OrderItem> Items => _items.AsReadOnly();
@@ -23,7 +24,7 @@ public class Order : AggregateRoot
 
     private Order() { } // EF Core
 
-    public static Order Create(string buyerId, Address shippingAddress, string currency)
+    public static Order Create(string buyerId, Address shippingAddress, string currency, Guid? checkoutId = null)
     {
         if (string.IsNullOrWhiteSpace(buyerId))
             throw new DomainException("BuyerId is required.");
@@ -32,6 +33,7 @@ public class Order : AggregateRoot
         {
             Id = OrderId.New(),
             BuyerId = buyerId,
+            CheckoutId = checkoutId,
             ShippingAddress = shippingAddress,
             Currency = currency,
             Status = OrderStatus.Pending,
