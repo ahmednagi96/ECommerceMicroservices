@@ -145,7 +145,6 @@ services:
       <<: *api-env
       DLL_NAME: Catalog.API.dll
       DB_HOST: catalog-db
-      RabbitMq__HostName: rabbitmq        # 👈 اسم خدمة RabbitMQ في الـ compose
 
     ports:
       - "127.0.0.1:5299:8080"
@@ -195,8 +194,10 @@ services:
       - "127.0.0.1:5260:8080"
     depends_on:
       basket-db:
-        condition: service_healthy   # Basket مش هتقوم غير لما Catalog تبقى جاهزة فعلًا
+        condition: service_healthy
         restart: true
+      rabbitmq:
+        condition: service_healthy   # Wolverine needs RabbitMQ at startup (AutoProvision)
     labels:
       com.ecommerce.service: basket
       com.ecommerce.tier: api
@@ -241,6 +242,8 @@ services:
       ordering-db:
         condition: service_healthy
         restart: true
+      rabbitmq:
+        condition: service_healthy   # Wolverine needs RabbitMQ at startup (AutoProvision)
     labels:
       com.ecommerce.service: ordering
       com.ecommerce.tier: api
