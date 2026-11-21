@@ -21,7 +21,7 @@ public class BasketController(ICatalogService catalogService,
 
  BasketDbContext dbContext
 //, IEventBus eventBus
- ,IMessageBus bus
+ //,IMessageBus bus
 , ILogger<BasketController> logger) : ControllerBase
 {
     [HttpPost("items")]
