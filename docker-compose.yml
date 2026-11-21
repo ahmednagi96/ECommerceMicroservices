@@ -145,13 +145,15 @@ services:
       <<: *api-env
       DLL_NAME: Catalog.API.dll
       DB_HOST: catalog-db
-
+      RabbitMq__HostName: rabbitmq   # NEW
     ports:
       - "127.0.0.1:5299:8080"
     depends_on:
       catalog-db:
         condition: service_healthy
         restart: true
+      rabbitmq:                       # NEW
+          condition: service_healthy    # Wolverine needs RabbitMQ at startup (AutoProvision    
     labels:
       com.ecommerce.service: catalog
       com.ecommerce.tier: api

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Catalog.Infrastructure.Data;
-using Catalog.Domain.Entities;
+using Catalog.Domain.Catalog;
 
 namespace Catalog.API.Controllers;
 

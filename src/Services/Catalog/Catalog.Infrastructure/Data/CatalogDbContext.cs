@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Catalog.Domain.Entities;
+using Catalog.Domain.Catalog;
 
 
 namespace Catalog.Infrastructure.Data;
@@ -11,4 +11,12 @@ public class CatalogDbContext : DbContext
     }
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Product> Products { get; set; } = null!;
+
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Product>()
+            .Property(p => p.PriceVersion)
+            .IsConcurrencyToken();
+    }
 }
