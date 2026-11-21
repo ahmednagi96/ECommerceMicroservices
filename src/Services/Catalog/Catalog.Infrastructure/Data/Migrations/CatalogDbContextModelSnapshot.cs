@@ -22,7 +22,7 @@ namespace Catalog.Infrastructure.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Catalog.Domain.Entities.Product", b =>
+            modelBuilder.Entity("Catalog.Domain.Catalog.Product", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -46,6 +46,10 @@ namespace Catalog.Infrastructure.Data.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<long>("PriceVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
                     b.Property<int>("Stock")
                         .HasColumnType("int");
 
@@ -57,7 +61,7 @@ namespace Catalog.Infrastructure.Data.Migrations
                     b.ToTable("Products");
                 });
 
-            modelBuilder.Entity("Catalog.Domain.Entities.User", b =>
+            modelBuilder.Entity("Catalog.Domain.Catalog.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()

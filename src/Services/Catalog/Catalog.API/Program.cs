@@ -1,6 +1,13 @@
+
 using Microsoft.EntityFrameworkCore;
 using BuildingBlocks;
+using Wolverine;
+using Wolverine.RabbitMQ;
+using Wolverine.SqlServer;
+using Wolverine.EntityFrameworkCore;
 using Catalog.Infrastructure.Data;
+using BuildingBlocks.Contracts.Catalog;
+using JasperFx.Resources;
 
 LocalEnvLoader.LoadLocalDotEnv();   // ⭐ لو شغّلت المشروع على جهازك، حط سطر ConnectionStrings__DefaultConnection في ملف .env
 var builder = WebApplication.CreateBuilder(args);
@@ -16,13 +23,40 @@ builder.Services.AddSwaggerGen();
 
 
 
-// register db context
-builder.Services.AddDbContext<CatalogDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")!
-     , sql =>
-        sql.EnableRetryOnFailure() // دي عشان لو الداتا بيز وقعت فالنص يديك 503 بعد مايحاول كذا مره
-    ));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
+builder.Services.AddDbContext<CatalogDbContext>(
+    options => options.UseSqlServer(connectionString),   // EnableRetryOnFailure removed
+    optionsLifetime: ServiceLifetime.Singleton);
 
+builder.Host.UseWolverine(opts =>
+{
+    opts.UseRuntimeCompilation();   // 👈 الجديد
+    // 1) الاتصال (نفس متغيرات الـ .env)
+    opts.UseRabbitMq(f =>
+    {
+        f.HostName = builder.Configuration["RabbitMq:HostName"]!;
+        f.UserName = builder.Configuration["RabbitMq:UserName"]!;
+        f.Password = builder.Configuration["RabbitMq:Password"]!;
+    })
+    .AutoProvision();   // اعمل الـ Exchanges والـ Queues لوحدك
+
+
+  // NEW 1) Store outgoing messages in Basket's own database (schema "wolverine")
+    opts.PersistMessagesWithSqlServer(connectionString, "wolverine");
+
+  // NEW 2) Let Wolverine join EF Core's transaction
+    opts.UseEntityFrameworkCoreTransactions();
+
+    // NEW 3) Every outgoing message goes through the durable outbox
+    opts.Policies.UseDurableOutboxOnAllSendingEndpoints();
+
+
+    // 4) الرسالة دي تروح على الـ Exchange ده
+    opts.PublishMessage<ProductPriceChangedIntegrationEvent>()
+        .ToRabbitExchange("product-price-changed");
+});
+// NEW 4) Create Wolverine's tables at startup
+builder.Services.AddResourceSetupOnStartup();    
 
 var app = builder.Build();
 

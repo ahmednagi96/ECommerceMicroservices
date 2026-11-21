@@ -1,4 +1,4 @@
-namespace Catalog.Domain.Entities;
+namespace Catalog.Domain.Catalog;
 
 public class User
 {
