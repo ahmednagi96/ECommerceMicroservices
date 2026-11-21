@@ -50,6 +50,9 @@ namespace Basket.Infrastructure.Data.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<long>("PriceVersion")
+                        .HasColumnType("bigint");
+
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uniqueidentifier");
 

@@ -6,6 +6,7 @@ using Wolverine.EntityFrameworkCore;
 using Catalog.Application.DTOs.Products.Requests;
 using Catalog.Domain.Exceptions;
 using BuildingBlocks.Contracts.Catalog;
+using Catalog.Application.DTOs.Products.Responses;
 namespace Catalog.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
@@ -17,12 +18,12 @@ public class ProductsController(
     ) : ControllerBase
 {
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetProductById(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult<ProductResponse>> GetProductById(Guid id, CancellationToken cancellationToken)
     {
         var product = await dbContext.Products.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
         if (product is null)
             return NotFound($"المنتج برقم {id} غير موجود في المعرض.");
-        return Ok(product);
+        return Ok(new ProductResponse(product.Id, product.Name, product.Price, product.PriceVersion));
     }
 
 

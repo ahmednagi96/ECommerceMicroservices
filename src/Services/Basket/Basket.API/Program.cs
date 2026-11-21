@@ -13,6 +13,8 @@ using BuildingBlocks.Contracts.Basket;
 using Wolverine.SqlServer;
 using Wolverine.EntityFrameworkCore;
 using JasperFx.Resources;
+using Wolverine.ErrorHandling;
+using Basket.Domain.Exceptions;
 
 LocalEnvLoader.LoadLocalDotEnv();   // ⭐ لو شغّلت المشروع على جهازك، حط سطر CatalogClient__BaseUrl في ملف .env
 var builder = WebApplication.CreateBuilder(args);
@@ -56,11 +58,18 @@ builder.Host.UseWolverine(opts =>
         f.UserName = builder.Configuration["RabbitMq:UserName"]!;
         f.Password = builder.Configuration["RabbitMq:Password"]!;
     })
+    .DeclareExchange("product-price-changed", ex => ex.BindQueue("basket.product-price-changed")) // NEW
     .AutoProvision();   // اعمل الـ Exchanges والـ Queues لوحدك
+
+
 
 
   // NEW 1) Store outgoing messages in Basket's own database (schema "wolverine")
     opts.PersistMessagesWithSqlServer(connectionString, "wolverine");
+
+    // NEW: listen through the durable inbox
+    opts.ListenToRabbitQueue("basket.product-price-changed")
+        .UseDurableInbox();
 
   // NEW 2) Let Wolverine join EF Core's transaction
     opts.UseEntityFrameworkCoreTransactions();
@@ -72,6 +81,17 @@ builder.Host.UseWolverine(opts =>
     // 4) الرسالة دي تروح على الـ Exchange ده
     opts.PublishMessage<BasketCheckedOutIntegrationEvent>()
         .ToRabbitExchange("basket-checked-out");
+
+
+    // 3) لو الخطأ "قاعدة بيزنس اتكسرت" ← الـ DLQ على طول، مفيش فايدة من المحاولة
+    opts.OnException<DomainException>().MoveToErrorQueue();
+
+    // 4) Anything else: short retries, then longer scheduled retries, then DLQ
+    opts.OnException<Exception>()
+    .RetryWithCooldown(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10))
+    .Then.ScheduleRetry(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(5))
+    .Then.MoveToErrorQueue();
+
 });
 // NEW 4) Create Wolverine's tables at startup
 builder.Services.AddResourceSetupOnStartup();

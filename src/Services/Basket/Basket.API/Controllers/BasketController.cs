@@ -61,7 +61,12 @@ public class BasketController(ICatalogService catalogService,
         {
             // إذا كان موجوداً، نزيد الكمية فقط ونحدث السعر
             existingItem.Quantity += request.Quantity;
-            existingItem.Price = product.Price;
+            // Only overwrite if Catalog gave us a newer price
+            if (product.PriceVersion > existingItem.PriceVersion)
+            {
+                existingItem.Price = product.Price;
+                existingItem.PriceVersion = product.PriceVersion;
+            }
         }
         else
         {
@@ -71,6 +76,7 @@ public class BasketController(ICatalogService catalogService,
                 ProductId = product.Id,
                 ProductName = product.Name,
                 Price = product.Price,
+                PriceVersion = product.PriceVersion,   // NEW
                 Quantity = request.Quantity
             });
         }
