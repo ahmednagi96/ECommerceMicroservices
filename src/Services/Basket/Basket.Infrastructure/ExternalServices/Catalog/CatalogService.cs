@@ -23,4 +23,17 @@ public class CatalogService(HttpClient httpClient) : ICatalogService
         // تحويل رد الجيسون مباشرة إلى كائن سي شارب
         return await response.Content.ReadFromJsonAsync<CatalogProductDto>(cancellationToken: cancellationToken);
     }
+
+    public async Task<IReadOnlyList<CatalogProductDto>> GetPricesAsync(
+    IReadOnlyCollection<Guid> productIds, CancellationToken cancellationToken = default)
+        {
+            // ids=a&ids=b&ids=c
+            var query = string.Join("&", productIds.Select(id => $"ids={id}"));
+
+            var response = await httpClient.GetAsync($"/api/products/prices?{query}", cancellationToken);
+            response.EnsureSuccessStatusCode();   // Catalog down or error → exception
+
+            return await response.Content.ReadFromJsonAsync<List<CatalogProductDto>>(cancellationToken: cancellationToken)
+                ?? [];
+        }
 }

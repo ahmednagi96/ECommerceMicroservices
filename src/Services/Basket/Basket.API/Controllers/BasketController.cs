@@ -9,6 +9,7 @@ using Basket.Application.DTOs.Checkout.Requests;
 using BuildingBlocks.Contracts.Basket;
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
+using Basket.Application.DTOs.Checkout.Responses;
 namespace Basket.API.Controllers;
 
 
@@ -97,6 +98,52 @@ public async Task<IActionResult> Checkout(CheckoutRequestDTO request, Cancellati
 
     if (cart is null || cart.Items.Count == 0)
         return Problem(statusCode: StatusCodes.Status400BadRequest, title: "السلة فاضية.");
+
+        IReadOnlyList<CatalogProductDto> catalogPrices;
+        try
+        {
+            var productIds = cart.Items.Select(i => i.ProductId).Distinct().ToList();
+            catalogPrices = await catalogService.GetPricesAsync(productIds, cancellationToken);
+        }
+        catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            logger.LogWarning(ex, "Catalog unavailable during checkout of {UserName}", cart.UserName);
+            return Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: "مش قادرين نتأكد من الأسعار دلوقتي، حاول بعد لحظات.");
+        }
+        //  NEW: compare the cart with the truth
+            var currentPrices = catalogPrices.ToDictionary(p => p.Id);
+            var priceChanges = new List<PriceChangeDTO>();
+            var removedItems = new List<ShoppingCartItem>();
+            foreach (var item in cart.Items)
+            {
+                if (!currentPrices.TryGetValue(item.ProductId, out var current))
+                {
+                    removedItems.Add(item);   // product is gone from Catalog
+                    continue;
+                }
+
+                if (current.Price != item.Price)
+                {
+                    priceChanges.Add(new PriceChangeDTO(item.ProductId, item.ProductName, item.Price, current.Price));
+                    item.Price = current.Price;              // fix the cart with the real price
+                    item.PriceVersion = current.PriceVersion;
+                }
+            }
+
+
+            // 4) NEW: something changed → fix the cart, stop, tell the customer
+        if (priceChanges.Count > 0 || removedItems.Count > 0)
+        {
+            dbContext.ShoppingCartItems.RemoveRange(removedItems);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return Conflict(new CheckoutConflictResponseDTO(
+                Message: "بعض المنتجات في سلتك اتغيرت. راجع السلة ودوس Checkout تاني.",
+                PriceChanges: priceChanges,
+                RemovedProducts: removedItems.Select(i => i.ProductName).ToList()));
+        }
+
 
     // 2) حوّل السلة للعقد
     var checkoutEvent = new BasketCheckedOutIntegrationEvent(

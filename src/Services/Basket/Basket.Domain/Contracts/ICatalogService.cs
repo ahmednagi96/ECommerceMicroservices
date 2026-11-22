@@ -7,4 +7,8 @@ public record CatalogProductDto(Guid Id, string Name, decimal Price, long PriceV
 public interface ICatalogService
 {
     Task<CatalogProductDto?> GetProductByIdAsync(Guid productId, CancellationToken cancellationToken = default);
+
+    // NEW: one call for many products
+    Task<IReadOnlyList<CatalogProductDto>> GetPricesAsync(
+        IReadOnlyCollection<Guid> productIds, CancellationToken cancellationToken = default);
 }

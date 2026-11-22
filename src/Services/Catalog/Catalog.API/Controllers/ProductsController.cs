@@ -77,4 +77,22 @@ public class ProductsController(
 
         return Ok(new { product.Id, product.Price, product.PriceVersion });
     }
+    
+        [HttpGet("prices")]
+        public async Task<IActionResult> GetPrices(
+            [FromQuery] Guid[] ids, CancellationToken cancellationToken)
+        {
+            // Protect Catalog from empty or huge requests
+            if (ids.Length is 0 or > 100)
+                return Problem(statusCode: StatusCodes.Status400BadRequest,
+                            title: "ids must contain between 1 and 100 items.");
+
+            var prices = await dbContext.Products
+                .AsNoTracking()
+                .Where(p => ids.Contains(p.Id))
+                .Select(p => new ProductResponse(p.Id, p.Name, p.Price, p.PriceVersion))
+                .ToListAsync(cancellationToken);
+
+            return Ok(prices);
+        }
 }
