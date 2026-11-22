@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Ordering.Domain.Orders;
+using Ordering.Domain.ValueObjects;
+
 namespace Ordering.Infrastructure.Configurations;   
 
 public class OrderConfiguration : IEntityTypeConfiguration<Order>

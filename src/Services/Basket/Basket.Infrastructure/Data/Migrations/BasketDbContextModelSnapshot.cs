@@ -48,7 +48,11 @@ namespace Basket.Infrastructure.Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("PriceVersion")
+                        .HasColumnType("bigint");
 
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uniqueidentifier");
@@ -65,7 +69,9 @@ namespace Basket.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ShoppingCartId");
+                    b.HasIndex("ShoppingCartId", "ProductId")
+                        .IsUnique()
+                        .HasFilter("[ShoppingCartId] IS NOT NULL");
 
                     b.ToTable("ShoppingCartItems");
                 });

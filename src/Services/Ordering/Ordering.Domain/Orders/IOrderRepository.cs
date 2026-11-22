@@ -1,3 +1,4 @@
+using Ordering.Domain.ValueObjects;
 namespace Ordering.Domain.Orders;
 public interface IOrderRepository
 {

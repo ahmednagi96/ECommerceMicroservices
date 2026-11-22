@@ -1,13 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
+using Ordering.Application.Orders.Queries;
 using Ordering.Domain.Exceptions;
 using Ordering.Domain.Orders;
+using Ordering.Domain.ValueObjects;
 
 namespace Ordering.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
-public class OrdersController(IOrderRepository orderRepository, ILogger<OrdersController> logger) : ControllerBase
+public class OrdersController(IOrderRepository orderRepository, ILogger<OrdersController> logger,IOrderQueries OrderQueries) : ControllerBase
 {
     // POST api/orders/{id}/confirm
     [HttpPost("{id:guid}/confirm")]
@@ -51,5 +53,18 @@ public class OrdersController(IOrderRepository orderRepository, ILogger<OrdersCo
 
         await orderRepository.SaveChangesAsync(cancellationToken);
         return NoContent();
+    }
+
+
+     // GET api/orders?buyerId=ahmed
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetByBuyer([FromQuery] string buyerId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(buyerId))
+            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "buyerId is required.");
+
+        var orders = await OrderQueries.GetByBuyerAsync(buyerId, cancellationToken);
+        return Ok(orders);
     }
 }

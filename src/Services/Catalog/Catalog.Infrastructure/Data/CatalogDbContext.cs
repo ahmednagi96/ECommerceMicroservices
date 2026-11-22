@@ -18,5 +18,9 @@ public class CatalogDbContext : DbContext
         modelBuilder.Entity<Product>()
             .Property(p => p.PriceVersion)
             .IsConcurrencyToken();
+
+        modelBuilder.Entity<Product>()
+            .Property(p => p.ImageUrl)
+            .IsRequired(false);
     }
 }

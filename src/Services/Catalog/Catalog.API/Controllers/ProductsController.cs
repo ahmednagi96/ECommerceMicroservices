@@ -6,25 +6,33 @@ using Wolverine.EntityFrameworkCore;
 using Catalog.Application.DTOs.Products.Requests;
 using Catalog.Domain.Exceptions;
 using BuildingBlocks.Contracts.Catalog;
+using Catalog.Application.DTOs.Products.Responses;
+using Microsoft.Extensions.Caching.Hybrid;
+using Catalog.Application.Caching;
+using Catalog.Application.Queries;
 namespace Catalog.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 
 public class ProductsController(
     CatalogDbContext dbContext,
+    HybridCache cache,
+    ICatalogQueries catalogQueries,
     [FromServices] IDbContextOutbox outbox,
     ILogger<ProductsController> logger
     ) : ControllerBase
 {
+
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetProductById(Guid id, CancellationToken cancellationToken)
     {
-        var product = await dbContext.Products.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+        var product = await catalogQueries.GetProductByIdAsync(id, cancellationToken);
+
         if (product is null)
             return NotFound($"المنتج برقم {id} غير موجود في المعرض.");
+
         return Ok(product);
     }
-
 
 
      [HttpPut("{id:guid}/price")]
@@ -70,10 +78,30 @@ public class ProductsController(
                 title: "السعر اتغير من حد تاني. اعمل Refresh وحاول تاني.");
         }
 
+        // NEW: the price is saved → drop the old copy from the cache
+        await cache.RemoveAsync(CatalogCacheKeys.Product(id), cancellationToken);
         logger.LogInformation(
             "Price of {ProductId} changed to {Price} (v{Version})",
             product.Id, product.Price, product.PriceVersion);
 
         return Ok(new { product.Id, product.Price, product.PriceVersion });
     }
+    
+        [HttpGet("prices")]
+        public async Task<IActionResult> GetPrices(
+            [FromQuery] Guid[] ids, CancellationToken cancellationToken)
+        {
+            // Protect Catalog from empty or huge requests
+            if (ids.Length is 0 or > 100)
+                return Problem(statusCode: StatusCodes.Status400BadRequest,
+                            title: "ids must contain between 1 and 100 items.");
+
+            var prices = await dbContext.Products
+                .AsNoTracking()
+                .Where(p => ids.Contains(p.Id))
+                .Select(p => new ProductResponse(p.Id, p.Name, p.Price, p.PriceVersion))
+                .ToListAsync(cancellationToken);
+
+            return Ok(prices);
+        }
 }
