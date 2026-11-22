@@ -18,6 +18,8 @@ using Ordering.Domain.Exceptions;
 using JasperFx.CodeGeneration.Model;   // 👈 فيه ServiceLocationPolicy
 using Wolverine.SqlServer;
 using JasperFx.Resources;
+using Ordering.Application.Orders.Queries;
+using Ordering.Infrastructure.Queries;
 LocalEnvLoader.LoadLocalDotEnv();   // ⭐ لو شغّلت المشروع على جهاز
 
 
@@ -47,7 +49,7 @@ builder.Services.AddScoped<DomainEventDispatcher>();
 builder.Services.AddScoped<IDomainEventHandler<OrderConfirmedDomainEvent>, OrderConfirmedHandler>();
 builder.Services.AddScoped<IDomainEventHandler<OrderCancelledDomainEvent>, OrderCancelledHandler>();    
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-
+builder.Services.AddScoped<IOrderQueries, OrderQueries>();
 
 //builder.Services.AddRabbitMqEventBus();
 //builder.Services.AddEventHandler<BasketCheckedOutIntegrationEvent, BasketCheckedOutHandler>("ordering");

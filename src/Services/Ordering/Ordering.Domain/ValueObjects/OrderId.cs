@@ -2,7 +2,7 @@
 
 
 // Strongly-typed IDs
-namespace Ordering.Domain.Orders;
+namespace Ordering.Domain.ValueObjects;
 
 public readonly record struct OrderId(Guid Value)
 {

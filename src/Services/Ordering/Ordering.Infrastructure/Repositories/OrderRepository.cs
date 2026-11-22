@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Ordering.Domain.Orders;
+using Ordering.Domain.ValueObjects;
 using Ordering.Infrastructure.Data;
 namespace Ordering.Infrastructure.Repositories;
 public class OrderRepository(OrderingDbContext db) : IOrderRepository
