@@ -115,7 +115,7 @@
 **9.** YARP Gateway و BFF (ومنها صفحة "طلباتي" بالـ API Composition) · **10.** Identity (Keycloak و JWT، و `buyerId` من التوكن) · **11.** Saga (`ReserveStock` كـ Command، وبـ Wolverine) · **12.** gRPC.
 
 ### المرحلة الخامسة: التشغيل والجودة
-**13.** Observability و Aspire (ومنها Alert على الـ DLQ) · **14.** Testing · **15.** CI/CD و K8s (ومنها `TypeLoadMode.Static` لـ Wolverine) · **16.** Advanced و Capstone.
+**13.** Observability و Aspire (ومنها Alert على الـ DLQ) · **14.** Testing · **15.** CI/CD و K8s (ومنها `TypeLoadMode.Static` لـ Wolverine) · **16.** Advanced و Capstone (ومنها Database Read Replicas: Primary/Secondary في SQL Server، وتوجيه القراية للـ Replica، و Replication Lag و Read-your-writes، والفرق بينها وبين الـ Data Replication بين الخدمات في الموديول 8).
 
 ---
 
@@ -151,7 +151,7 @@
 | 13 | Observability و Aspire | ⬜ | | |
 | 14 | Testing | ⬜ | | |
 | 15 | CI/CD و K8s | ⬜ | | |
-| 16 | Advanced و Capstone | ⬜ | | |
+| 16 | Advanced و Capstone (+ Database Read Replicas) | ⬜ | | |
 
 **سجل الجلسات:**
 - 2026-11-12 · قفلنا الموديول 4، وبدأنا 5.1.
