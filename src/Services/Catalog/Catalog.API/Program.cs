@@ -8,6 +8,9 @@ using Wolverine.EntityFrameworkCore;
 using Catalog.Infrastructure.Data;
 using BuildingBlocks.Contracts.Catalog;
 using JasperFx.Resources;
+using Catalog.Application.Queries;
+using Catalog.Infrastructure.Queries;
+using Microsoft.Extensions.Caching.Hybrid;
 
 LocalEnvLoader.LoadLocalDotEnv();   // ⭐ لو شغّلت المشروع على جهازك، حط سطر ConnectionStrings__DefaultConnection في ملف .env
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +30,9 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<CatalogDbContext>(
     options => options.UseSqlServer(connectionString),   // EnableRetryOnFailure removed
     optionsLifetime: ServiceLifetime.Singleton);
+
+// Read-side queries (DbContext + HybridCache)
+builder.Services.AddScoped<ICatalogQueries, CatalogQueries>();
 
 builder.Host.UseWolverine(opts =>
 {
@@ -57,6 +63,24 @@ builder.Host.UseWolverine(opts =>
 });
 // NEW 4) Create Wolverine's tables at startup
 builder.Services.AddResourceSetupOnStartup();    
+
+
+// L2: Redis (shared by all Catalog instances)
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "catalog:";   // every key starts with "catalog:"
+});
+
+// HybridCache = L1 (memory) + L2 (Redis above, picked up automatically)
+builder.Services.AddHybridCache(options =>
+{
+    options.DefaultEntryOptions = new HybridCacheEntryOptions
+    {
+        Expiration = TimeSpan.FromMinutes(10),           // how long in Redis
+        LocalCacheExpiration = TimeSpan.FromSeconds(30)  // how long in memory (short on purpose)
+    };
+});
 
 var app = builder.Build();
 

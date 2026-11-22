@@ -146,6 +146,7 @@ services:
       DLL_NAME: Catalog.API.dll
       DB_HOST: catalog-db
       RabbitMq__HostName: rabbitmq   # NEW
+      ConnectionStrings__Redis: redis:6379 #NEW
     ports:
       - "127.0.0.1:5299:8080"
     depends_on:
@@ -153,7 +154,9 @@ services:
         condition: service_healthy
         restart: true
       rabbitmq:                       # NEW
-          condition: service_healthy    # Wolverine needs RabbitMQ at startup (AutoProvision    
+          condition: service_healthy    # Wolverine needs RabbitMQ at startup (AutoProvision  
+      redis:                                     # NEW
+        condition: service_healthy      
     labels:
       com.ecommerce.service: catalog
       com.ecommerce.tier: api
@@ -273,7 +276,23 @@ services:
       retries: 5
     networks:
       - ecommerce
-
+  redis:
+    image: redis:8-alpine
+    container_name: ecommerce-redis
+    hostname: redis
+    # Cache only: no disk persistence, max 256MB, drop least-used keys when full
+    command: ["redis-server", "--save", "", "--appendonly", "no",
+              "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    networks:
+      - ecommerce
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
 
 networks:
   ecommerce:

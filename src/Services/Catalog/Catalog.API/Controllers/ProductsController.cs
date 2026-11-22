@@ -7,25 +7,32 @@ using Catalog.Application.DTOs.Products.Requests;
 using Catalog.Domain.Exceptions;
 using BuildingBlocks.Contracts.Catalog;
 using Catalog.Application.DTOs.Products.Responses;
+using Microsoft.Extensions.Caching.Hybrid;
+using Catalog.Application.Caching;
+using Catalog.Application.Queries;
 namespace Catalog.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 
 public class ProductsController(
     CatalogDbContext dbContext,
+    HybridCache cache,
+    ICatalogQueries catalogQueries,
     [FromServices] IDbContextOutbox outbox,
     ILogger<ProductsController> logger
     ) : ControllerBase
 {
+
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<ProductResponse>> GetProductById(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetProductById(Guid id, CancellationToken cancellationToken)
     {
-        var product = await dbContext.Products.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+        var product = await catalogQueries.GetProductByIdAsync(id, cancellationToken);
+
         if (product is null)
             return NotFound($"المنتج برقم {id} غير موجود في المعرض.");
-        return Ok(new ProductResponse(product.Id, product.Name, product.Price, product.PriceVersion));
-    }
 
+        return Ok(product);
+    }
 
 
      [HttpPut("{id:guid}/price")]
@@ -71,6 +78,8 @@ public class ProductsController(
                 title: "السعر اتغير من حد تاني. اعمل Refresh وحاول تاني.");
         }
 
+        // NEW: the price is saved → drop the old copy from the cache
+        await cache.RemoveAsync(CatalogCacheKeys.Product(id), cancellationToken);
         logger.LogInformation(
             "Price of {ProductId} changed to {Price} (v{Version})",
             product.Id, product.Price, product.PriceVersion);
