@@ -31,5 +31,6 @@
     <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.61.0" />
     <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="6.61.0" />
     <PackageVersion Include="WolverineFx.SqlServer" Version="6.61.0" />
+    <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
   </ItemGroup>
 </Project>

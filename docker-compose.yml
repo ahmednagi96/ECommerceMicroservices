@@ -124,8 +124,8 @@ services:
     hostname: catalog-db
     env_file:
       - ./src/Services/Catalog/.env
-    ports:
-      - "127.0.0.1:1436:1433"
+    #ports:
+    #  - "127.0.0.1:1436:1433"
     volumes:
       - catalog-db-data:/var/opt/mssql
     labels:
@@ -134,7 +134,7 @@ services:
 
   catalog-api:
     <<: *api
-    container_name: ecommerce-catalog-api
+    #container_name: ecommerce-catalog-api
     hostname: catalog-api
     build:
       context: .
@@ -147,8 +147,8 @@ services:
       DB_HOST: catalog-db
       RabbitMq__HostName: rabbitmq   # NEW
       ConnectionStrings__Redis: redis:6379 #NEW
-    ports:
-      - "127.0.0.1:5299:8080"
+    #ports:
+    #  - "127.0.0.1:5299:8080"
     depends_on:
       catalog-db:
         condition: service_healthy
@@ -173,8 +173,8 @@ services:
     hostname: basket-db
     env_file:
       - ./src/Services/Basket/.env
-    ports:
-      - "127.0.0.1:1435:1433"
+    #ports:
+    #  - "127.0.0.1:1435:1433"
     volumes:
       - basket-db-data:/var/opt/mssql
     labels:
@@ -183,7 +183,7 @@ services:
 
   basket-api:
     <<: *api
-    container_name: ecommerce-basket-api
+    #container_name: ecommerce-basket-api
     hostname: basket-api
     build:
       context: .
@@ -195,8 +195,8 @@ services:
       DLL_NAME: Basket.API.dll
       DB_HOST: basket-db
       RabbitMq__HostName: rabbitmq   # اسم خدمة RabbitMQ على شبكة Docker (localhost هنا = الحاوية نفسها)
-    ports:
-      - "127.0.0.1:5260:8080"
+    #ports:
+    #  - "127.0.0.1:5260:8080"
     depends_on:
       basket-db:
         condition: service_healthy
@@ -219,8 +219,8 @@ services:
     hostname: ordering-db
     env_file:
       - ./src/Services/Ordering/.env
-    ports:
-      - "127.0.0.1:1437:1433"
+    #ports:
+    #  - "127.0.0.1:1437:1433"
     volumes:
       - ordering-db-data:/var/opt/mssql
     labels:
@@ -241,8 +241,8 @@ services:
       DLL_NAME: Ordering.API.dll
       DB_HOST: ordering-db
       RabbitMq__HostName: rabbitmq        # 👈 اسم خدمة RabbitMQ في الـ compose
-    ports:
-      - "127.0.0.1:5257-5259:8080"
+    #ports:
+    #  - "127.0.0.1:5257-5259:8080"
     depends_on:
       ordering-db:
         condition: service_healthy
@@ -264,9 +264,9 @@ services:
     container_name: rabbitmq
     env_file:
       - ./rabbitmq.env
-    ports:
-      - "5672:5672"     # البورت اللي الخدمات بتكلمه (AMQP)
-      - "15672:15672"   # لوحة التحكم في المتصفح
+    #ports:
+    #  - "5672:5672"     # البورت اللي الخدمات بتكلمه (AMQP)
+    #  - "15672:15672"   # لوحة التحكم في المتصفح
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq   # الرسائل متضيعش لو الكونتينر اتقفل
     healthcheck:
@@ -283,8 +283,8 @@ services:
     # Cache only: no disk persistence, max 256MB, drop least-used keys when full
     command: ["redis-server", "--save", "", "--appendonly", "no",
               "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
-    ports:
-      - "127.0.0.1:6379:6379"
+    #ports:
+    #  - "127.0.0.1:6379:6379"
     networks:
       - ecommerce
     healthcheck:
@@ -293,6 +293,43 @@ services:
       timeout: 3s
       retries: 5
     restart: unless-stopped
+
+  gateway-api:
+    container_name: ecommerce-gateway-api
+    hostname: gateway-api
+    build:
+      context: .
+      dockerfile: src/ApiGateways/Gateway.API/Dockerfile
+    restart: unless-stopped
+    init: true
+    networks:
+      - ecommerce
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ASPNETCORE_URLS: http://+:8080
+      # Override localhost addresses with Docker service names
+      #ReverseProxy__Clusters__catalog-cluster__Destinations__catalog-1__Address: http://catalog-api:8080/
+      #ReverseProxy__Clusters__basket-cluster__Destinations__basket-1__Address: http://basket-api:8080/
+      #ReverseProxy__Clusters__ordering-cluster__Destinations__ordering-1__Address: http://ordering-api:8080/
+    ports:
+      - "127.0.0.1:5100:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256m
+    labels:
+      com.ecommerce.service: gateway
+      com.ecommerce.tier: edge
 
 networks:
   ecommerce:
