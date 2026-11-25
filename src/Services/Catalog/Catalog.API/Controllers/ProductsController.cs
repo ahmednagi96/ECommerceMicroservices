@@ -104,4 +104,18 @@ public class ProductsController(
 
             return Ok(prices);
         }
+
+
+        // GET api/products?ids=...&ids=...
+        [HttpGet]
+        public async Task<IActionResult> GetSummaries(
+            [FromQuery] Guid[] ids, CancellationToken cancellationToken)
+        {
+            // Same protection as /prices
+            if (ids.Length is 0 or > 100)
+                return Problem(statusCode: StatusCodes.Status400BadRequest,
+                            title: "ids must contain between 1 and 100 items.");
+            var products = await catalogQueries.GetProductsSummaryByIdAsync(ids, cancellationToken);
+            return Ok(products);
+        }
 }

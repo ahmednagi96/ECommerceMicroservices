@@ -22,4 +22,13 @@ public sealed class CatalogQueries(CatalogDbContext dbContext, HybridCache cache
                 .FirstOrDefaultAsync(token),
             cancellationToken: ct);
     }
+
+    public async Task<IReadOnlyList<ProductSummaryResponse>> GetProductsSummaryByIdAsync(Guid[] ids, CancellationToken ct)
+    {
+        return await dbContext.Products
+            .AsNoTracking()
+            .Where(p => ids.Contains(p.Id))
+            .Select(p => new ProductSummaryResponse(p.Id, p.Name, p.ImageUrl, p.Price, p.Stock > 0))
+            .ToListAsync(ct);
+    }
 }
