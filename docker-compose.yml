@@ -173,8 +173,8 @@ services:
     hostname: basket-db
     env_file:
       - ./src/Services/Basket/.env
-    #ports:
-    #  - "127.0.0.1:1435:1433"
+    ports:
+      - "127.0.0.1:1435:1433"
     volumes:
       - basket-db-data:/var/opt/mssql
     labels:
