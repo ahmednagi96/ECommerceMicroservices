@@ -124,8 +124,8 @@ services:
     hostname: catalog-db
     env_file:
       - ./src/Services/Catalog/.env
-    #ports:
-    #  - "127.0.0.1:1436:1433"
+    ports:
+      - "127.0.0.1:1436:1433"
     volumes:
       - catalog-db-data:/var/opt/mssql
     labels:
@@ -219,8 +219,8 @@ services:
     hostname: ordering-db
     env_file:
       - ./src/Services/Ordering/.env
-    #ports:
-    #  - "127.0.0.1:1437:1433"
+    ports:
+      - "127.0.0.1:1437:1433"
     volumes:
       - ordering-db-data:/var/opt/mssql
     labels:
@@ -241,8 +241,8 @@ services:
       DLL_NAME: Ordering.API.dll
       DB_HOST: ordering-db
       RabbitMq__HostName: rabbitmq        # 👈 اسم خدمة RabbitMQ في الـ compose
-    #ports:
-    #  - "127.0.0.1:5257-5259:8080"
+    ports:
+      - "127.0.0.1:5257-5259:8080"
     depends_on:
       ordering-db:
         condition: service_healthy
@@ -330,6 +330,38 @@ services:
     labels:
       com.ecommerce.service: gateway
       com.ecommerce.tier: edge
+
+  web-bff:
+    container_name: ecommerce-web-bff
+    hostname: web-bff
+    build:
+      context: .
+      dockerfile: src/ApiGateways/Web.Bff/Dockerfile
+    restart: unless-stopped
+    init: true
+    networks:
+      - ecommerce
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ASPNETCORE_URLS: http://+:8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256m
+    labels:
+      com.ecommerce.service: web-bff
+      com.ecommerce.tier: edge
+
 
 networks:
   ecommerce:
