@@ -62,3 +62,4 @@ Thumbs.db
 secrets.json
 appsettings.*.local.json
 rabbitmq.env
+keycloak.env

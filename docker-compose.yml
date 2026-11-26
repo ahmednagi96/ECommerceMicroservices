@@ -362,6 +362,33 @@ services:
       com.ecommerce.service: web-bff
       com.ecommerce.tier: edge
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.2
+    command: ["start-dev", "--import-realm"]
+    restart: unless-stopped
+    networks:
+      - ecommerce
+    env_file:
+      - ./keycloak.env
+    environment:
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "127.0.0.1:8180:8080"
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+      - ./keycloak/ecommerce-realm.json:/opt/keycloak/data/import/ecommerce-realm.json:ro
+    healthcheck:
+      test: ["CMD", "bash", "-c", "{ printf 'HEAD /health/ready HTTP/1.0\\r\\n\\r\\n' >&0; grep -q 'HTTP/1.0 200'; } 0<>/dev/tcp/localhost/9000"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1g
 
 networks:
   ecommerce:
@@ -377,3 +404,5 @@ volumes:
     name: ecommerce-ordering-db
   rabbitmq_data:
     name: ecommerce-rabbitmq
+  keycloak-data:
+    name: keycloak-data  
