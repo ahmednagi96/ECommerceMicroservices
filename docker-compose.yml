@@ -195,8 +195,10 @@ services:
       DLL_NAME: Basket.API.dll
       DB_HOST: basket-db
       RabbitMq__HostName: rabbitmq   # اسم خدمة RabbitMQ على شبكة Docker (localhost هنا = الحاوية نفسها)
-    #ports:
-    #  - "127.0.0.1:5260:8080"
+      Auth__MetadataAddress: http://keycloak:8080/realms/ecommerce/.well-known/openid-configuration
+
+    ports:
+      - "127.0.0.1:5260:8080"
     depends_on:
       basket-db:
         condition: service_healthy
@@ -241,6 +243,7 @@ services:
       DLL_NAME: Ordering.API.dll
       DB_HOST: ordering-db
       RabbitMq__HostName: rabbitmq        # 👈 اسم خدمة RabbitMQ في الـ compose
+      Auth__MetadataAddress: http://keycloak:8080/realms/ecommerce/.well-known/openid-configuration
     ports:
       - "127.0.0.1:5257-5259:8080"
     depends_on:
@@ -372,6 +375,8 @@ services:
       - ./keycloak.env
     environment:
       KC_HEALTH_ENABLED: "true"
+      KC_HOSTNAME: http://localhost:8180
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
     ports:
       - "127.0.0.1:8180:8080"
     volumes:

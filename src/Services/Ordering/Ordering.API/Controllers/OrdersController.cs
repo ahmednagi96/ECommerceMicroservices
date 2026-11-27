@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Ordering.Application.Orders.Queries;
 using Ordering.Domain.Exceptions;
 using Ordering.Domain.Orders;
 using Ordering.Domain.ValueObjects;
+using BuildingBlocks.Authentication;
 
 namespace Ordering.API.Controllers;
 
@@ -56,14 +58,14 @@ public class OrdersController(IOrderRepository orderRepository, ILogger<OrdersCo
     }
 
 
-     // GET api/orders?buyerId=ahmed
+    // GET api/orders  (buyerId comes from the token's "sub" claim)
+    [Authorize]
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetByBuyer([FromQuery] string buyerId, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetMine(CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(buyerId))
-            return Problem(statusCode: StatusCodes.Status400BadRequest, title: "buyerId is required.");
-
+        var buyerId = User.GetRequiredUserId();
         var orders = await OrderQueries.GetByBuyerAsync(buyerId, cancellationToken);
         return Ok(orders);
     }
