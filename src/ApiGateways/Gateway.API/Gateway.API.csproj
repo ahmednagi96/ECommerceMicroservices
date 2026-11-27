@@ -2,6 +2,7 @@
 
  <ItemGroup>
     <PackageReference Include="Yarp.ReverseProxy" />
+    <ProjectReference Include="..\..\BuildingBlocks\BuildingBlocks.Authentication\BuildingBlocks.Authentication.csproj" />
   </ItemGroup>
 
 </Project>

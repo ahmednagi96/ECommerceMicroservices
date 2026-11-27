@@ -116,6 +116,8 @@ x-api-env: &api-env
   ASPNETCORE_ENVIRONMENT: Development
   ASPNETCORE_URLS: http://+:8080
   DB_PORT: "1433"
+  Auth__MetadataAddress: http://keycloak:8080/realms/ecommerce/.well-known/openid-configuration
+  Auth__RequireHttpsMetadata: "false"
 
 services:
   catalog-db:
@@ -195,7 +197,6 @@ services:
       DLL_NAME: Basket.API.dll
       DB_HOST: basket-db
       RabbitMq__HostName: rabbitmq   # اسم خدمة RabbitMQ على شبكة Docker (localhost هنا = الحاوية نفسها)
-      Auth__MetadataAddress: http://keycloak:8080/realms/ecommerce/.well-known/openid-configuration
 
     ports:
       - "127.0.0.1:5260:8080"
@@ -243,7 +244,6 @@ services:
       DLL_NAME: Ordering.API.dll
       DB_HOST: ordering-db
       RabbitMq__HostName: rabbitmq        # 👈 اسم خدمة RabbitMQ في الـ compose
-      Auth__MetadataAddress: http://keycloak:8080/realms/ecommerce/.well-known/openid-configuration
     ports:
       - "127.0.0.1:5257-5259:8080"
     depends_on:

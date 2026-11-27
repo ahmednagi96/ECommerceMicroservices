@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -15,8 +16,8 @@ public static class JwtAuthenticationExtensions
             {
                 options.MetadataAddress = builder.Configuration["Auth:MetadataAddress"]!;
                 options.Audience = builder.Configuration["Auth:Audience"];
-                options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
-                options.MapInboundClaims = false;
+                // Secure by default; only local environments turn it off
+                options.RequireHttpsMetadata = builder.Configuration.GetValue("Auth:RequireHttpsMetadata", defaultValue: true);                options.MapInboundClaims = false;
                 options.TokenValidationParameters.NameClaimType = "preferred_username";
             });
 

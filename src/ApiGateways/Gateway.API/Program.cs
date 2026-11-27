@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using BuildingBlocks.Authentication;
 using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,7 +24,7 @@ builder.Services.AddRateLimiter(options =>
             return RateLimitPartition.GetNoLimiter("health");
 
         return RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: ClientIp(httpContext),
+            partitionKey: ClientKey(httpContext),
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 20,
@@ -63,14 +64,23 @@ builder.Services.AddCors(options =>
         .WithMethods("GET", "POST", "PUT", "DELETE")
         .AllowAnyHeader());
 });
+
+builder.AddJwtAuthentication();
 var app = builder.Build();
 app.MapHealthChecks("/health/live");  // NEW: "is the gateway process alive?"
 
 app.UseCors();          // NEW: before the rate limiter
+app.UseAuthentication();   // NEW: fills context.User before the limiter needs it
 app.UseRateLimiter();   // NEW: must come before MapReverseProxy
+app.UseAuthorization();
 // Add the proxy to the request pipeline
 app.MapReverseProxy();
 
 app.Run();
 static string ClientIp(HttpContext context) =>
     context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+// Logged-in user: one counter per user. Guest: one counter per IP.
+static string ClientKey(HttpContext context) =>
+    context.User.Identity?.IsAuthenticated == true
+        ? $"user:{context.User.GetRequiredUserId()}"
+        : $"ip:{ClientIp(context)}";    

@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using BuildingBlocks.Authentication;
 using Web.Bff.Clients;
 
 namespace Web.Bff.MyOrders;
@@ -5,25 +7,27 @@ namespace Web.Bff.MyOrders;
 public static class MyOrdersEndpoint
 {
     public static void MapMyOrders(this WebApplication app) =>
-        app.MapGet("/my-orders", GetMyOrders);
+        app.MapGet("/my-orders", GetMyOrders)
+        .RequireAuthorization();
 
     private static async Task<IResult> GetMyOrders(
-        string buyerId,
+        ClaimsPrincipal User,
         OrderingClient ordering,
         CatalogClient catalog,
         ILoggerFactory loggerFactory,
         CancellationToken ct)
     {
         var logger = loggerFactory.CreateLogger("MyOrders");
-
-        if (string.IsNullOrWhiteSpace(buyerId))
-            return TypedResults.Problem(statusCode: 400, title: "buyerId is required.");
-
+        var buyerId=User.GetRequiredUserId();
         // 1) Orders are the core of the page: no orders = no page
         IReadOnlyList<OrderDto> orders;
         try
         {
-            orders = await ordering.GetOrdersAsync(buyerId, ct);
+            orders = await ordering.GetOrdersAsync(ct);
+        }
+         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            return TypedResults.Unauthorized();           // 3) NEW: token expired on the way, not "down"
         }
         catch (Exception ex) when (!ct.IsCancellationRequested)
         {

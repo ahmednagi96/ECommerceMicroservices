@@ -5,6 +5,7 @@
     <PackageReference Include="Serilog.AspNetCore" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <ProjectReference Include="..\BuildingBlocks.Authentication\BuildingBlocks.Authentication.csproj" />
   </ItemGroup>
 
 </Project>
