@@ -17,8 +17,10 @@ public static class JwtAuthenticationExtensions
                 options.MetadataAddress = builder.Configuration["Auth:MetadataAddress"]!;
                 options.Audience = builder.Configuration["Auth:Audience"];
                 // Secure by default; only local environments turn it off
-                options.RequireHttpsMetadata = builder.Configuration.GetValue("Auth:RequireHttpsMetadata", defaultValue: true);                options.MapInboundClaims = false;
+                options.RequireHttpsMetadata = builder.Configuration.GetValue("Auth:RequireHttpsMetadata", defaultValue: true);   
+                options.MapInboundClaims = false;
                 options.TokenValidationParameters.NameClaimType = "preferred_username";
+                options.TokenValidationParameters.RoleClaimType = "roles";   // NEW
             });
 
         builder.Services.AddAuthorization();
