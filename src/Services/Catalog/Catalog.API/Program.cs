@@ -11,6 +11,7 @@ using JasperFx.Resources;
 using Catalog.Application.Queries;
 using Catalog.Infrastructure.Queries;
 using Microsoft.Extensions.Caching.Hybrid;
+using BuildingBlocks.Authentication;
 
 LocalEnvLoader.LoadLocalDotEnv();   // ⭐ لو شغّلت المشروع على جهازك، حط سطر ConnectionStrings__DefaultConnection في ملف .env
 var builder = WebApplication.CreateBuilder(args);
@@ -82,6 +83,7 @@ builder.Services.AddHybridCache(options =>
     };
 });
 
+builder.AddJwtAuthentication();
 var app = builder.Build();
 
 app.UseServiceDefaults();                       // ⭐ بدل كود الـ middleware والـ health
@@ -97,6 +99,7 @@ if (app.Environment.IsDevelopment())
 
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

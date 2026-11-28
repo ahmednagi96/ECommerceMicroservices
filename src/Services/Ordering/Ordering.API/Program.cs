@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Ordering.Infrastructure.Data;
 using BuildingBlocks;
+using BuildingBlocks.Authentication;
 using Ordering.Application.Common;
 using Ordering.Application.Orders.EventHandlers;
 using Ordering.Domain.Orders.Events;
@@ -20,6 +21,7 @@ using Wolverine.SqlServer;
 using JasperFx.Resources;
 using Ordering.Application.Orders.Queries;
 using Ordering.Infrastructure.Queries;
+
 LocalEnvLoader.LoadLocalDotEnv();   // ⭐ لو شغّلت المشروع على جهاز
 
 
@@ -34,6 +36,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.AddJwtAuthentication();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
 
@@ -86,6 +89,12 @@ builder.Host.UseWolverine(opts =>
 });
 // NEW 3) Create Wolverine's tables at startup
 builder.Services.AddResourceSetupOnStartup();
+
+
+
+
+
+
 var app = builder.Build();
 
 app.UseServiceDefaults();                       // ⭐ بدل كود الـ middleware والـ health
@@ -109,7 +118,9 @@ if (app.Environment.IsDevelopment())
 
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
+
 
 app.MapControllers();
 app.Run();

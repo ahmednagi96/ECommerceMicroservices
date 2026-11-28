@@ -10,6 +10,8 @@ using Catalog.Application.DTOs.Products.Responses;
 using Microsoft.Extensions.Caching.Hybrid;
 using Catalog.Application.Caching;
 using Catalog.Application.Queries;
+using Microsoft.AspNetCore.Authorization;
+using BuildingBlocks.Authentication;
 namespace Catalog.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
@@ -34,8 +36,9 @@ public class ProductsController(
         return Ok(product);
     }
 
+    [Authorize(Roles = AppRoles.Admin)]
 
-     [HttpPut("{id:guid}/price")]
+    [HttpPut("{id:guid}/price")]
     public async Task<IActionResult> ChangePrice(
         Guid id, ChangePriceRequest request, CancellationToken cancellationToken)
     {

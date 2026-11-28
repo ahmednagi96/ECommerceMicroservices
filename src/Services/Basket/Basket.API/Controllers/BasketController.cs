@@ -4,17 +4,18 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Basket.Application.DTOs.Items.Requests;
 using Basket.Infrastructure.Data;
-using BuildingBlocks.Messaging;
 using Basket.Application.DTOs.Checkout.Requests;
 using BuildingBlocks.Contracts.Basket;
-using Wolverine;
 using Wolverine.EntityFrameworkCore;
 using Basket.Application.DTOs.Checkout.Responses;
+using BuildingBlocks.Authentication;
+using Microsoft.AspNetCore.Authorization;
 namespace Basket.API.Controllers;
 
 
 // البيانات التي نسمح للعميل بإرسالها (بدون سعر وبدون اسم لمنع التلاعب!)
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class BasketController(ICatalogService catalogService,
@@ -28,6 +29,7 @@ public class BasketController(ICatalogService catalogService,
     [HttpPost("items")]
     public async Task<IActionResult> AddItemToBasket(AddItemRequestDTO request, CancellationToken cancellationToken)
     {
+        var BuyerId=User.GetRequiredUserId();
         CatalogProductDto? product;
         try
         {
@@ -49,11 +51,11 @@ public class BasketController(ICatalogService catalogService,
         // ٢. نبحث في قاعدة بيانات السلة: هل العميل لديه سلة حالية؟
         var cart = await dbContext.ShoppingCarts
             .Include(c => c.Items)
-            .FirstOrDefaultAsync(c => c.UserName == request.UserName, cancellationToken);
+            .FirstOrDefaultAsync(c => c.BuyerId == BuyerId, cancellationToken);
         // إذا لم يكن لديه سلة، ننشئ له سلة أب جديدة
         if (cart is null)
         {
-            cart = new ShoppingCart { UserName = request.UserName };
+            cart = new ShoppingCart { BuyerId = BuyerId };
             dbContext.ShoppingCarts.Add(cart);
         }
         // ٣. نفحص هل المنتج موجود مسبقاً داخل سلة هذا العميل أم لا؟
@@ -91,10 +93,11 @@ public class BasketController(ICatalogService catalogService,
     [HttpPost("checkout")]
 public async Task<IActionResult> Checkout(CheckoutRequestDTO request, CancellationToken cancellationToken)
 {
+    var BuyerId=User.GetRequiredUserId();
     // 1) هات السلة
     var cart = await dbContext.ShoppingCarts
         .Include(c => c.Items)
-        .FirstOrDefaultAsync(c => c.UserName == request.UserName, cancellationToken);
+        .FirstOrDefaultAsync(c => c.BuyerId == BuyerId, cancellationToken);
 
     if (cart is null || cart.Items.Count == 0)
         return Problem(statusCode: StatusCodes.Status400BadRequest, title: "السلة فاضية.");
@@ -107,7 +110,7 @@ public async Task<IActionResult> Checkout(CheckoutRequestDTO request, Cancellati
         }
         catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
         {
-            logger.LogWarning(ex, "Catalog unavailable during checkout of {UserName}", cart.UserName);
+            logger.LogWarning(ex, "Catalog unavailable during checkout of {UserName}", cart.BuyerId);
             return Problem(
                 statusCode: StatusCodes.Status503ServiceUnavailable,
                 title: "مش قادرين نتأكد من الأسعار دلوقتي، حاول بعد لحظات.");
@@ -147,7 +150,7 @@ public async Task<IActionResult> Checkout(CheckoutRequestDTO request, Cancellati
 
     // 2) حوّل السلة للعقد
     var checkoutEvent = new BasketCheckedOutIntegrationEvent(
-        BuyerId: cart.UserName,
+        BuyerId: cart.BuyerId,
         Currency: "EGP",
         ShippingAddress: new CheckoutAddress(request.Street, request.City, request.Country, request.ZipCode),
         Items: cart.Items
@@ -166,7 +169,7 @@ public async Task<IActionResult> Checkout(CheckoutRequestDTO request, Cancellati
     await outbox.SaveChangesAndFlushMessagesAsync(cancellationToken);
 
     // 5) "استلمنا طلبك" ✅
-    logger.LogInformation("Basket of {UserName} checked out. CheckoutId: {CheckoutId}", cart.UserName, checkoutEvent.Id);
+    logger.LogInformation("Basket of {UserName} checked out. CheckoutId: {CheckoutId}", cart.BuyerId, checkoutEvent.Id);
     return Accepted(new { checkoutId = checkoutEvent.Id });
 }
 }

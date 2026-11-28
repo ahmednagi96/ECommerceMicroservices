@@ -3,9 +3,11 @@ WORKDIR /app
 
 COPY ["Directory.Build.props", "Directory.Packages.props", "./"]
 COPY ["src/ApiGateways/Web.Bff/Web.Bff.csproj", "src/ApiGateways/Web.Bff/"]
+COPY ["src/BuildingBlocks/BuildingBlocks.Authentication/BuildingBlocks.Authentication.csproj", "src/BuildingBlocks/BuildingBlocks.Authentication/"]
 RUN dotnet restore "src/ApiGateways/Web.Bff/Web.Bff.csproj"
 
 COPY src/ApiGateways/Web.Bff/ src/ApiGateways/Web.Bff/
+COPY src/BuildingBlocks/BuildingBlocks.Authentication/ src/BuildingBlocks/BuildingBlocks.Authentication/
 WORKDIR /app/src/ApiGateways/Web.Bff
 RUN dotnet publish "Web.Bff.csproj" -c Release -o /app/publish /p:UseAppHost=false
 

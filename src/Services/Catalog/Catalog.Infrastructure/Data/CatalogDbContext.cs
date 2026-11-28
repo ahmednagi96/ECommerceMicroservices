@@ -9,7 +9,6 @@ public class CatalogDbContext : DbContext
     public CatalogDbContext(DbContextOptions<CatalogDbContext> options) : base(options)
     {
     }
-    public DbSet<User> Users { get; set; } = null!;
     public DbSet<Product> Products { get; set; } = null!;
 
 

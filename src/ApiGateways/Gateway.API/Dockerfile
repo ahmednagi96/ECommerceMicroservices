@@ -7,9 +7,12 @@ COPY ["Directory.Build.props", "Directory.Packages.props", "./"]
 
 # Only the gateway project (it references no other project)
 COPY ["src/ApiGateways/Gateway.API/Gateway.API.csproj", "src/ApiGateways/Gateway.API/"]
+COPY ["src/BuildingBlocks/BuildingBlocks.Authentication/BuildingBlocks.Authentication.csproj", "src/BuildingBlocks/BuildingBlocks.Authentication/"]
+
 RUN dotnet restore "src/ApiGateways/Gateway.API/Gateway.API.csproj"
 
 COPY src/ApiGateways/Gateway.API/ src/ApiGateways/Gateway.API/
+COPY src/BuildingBlocks/BuildingBlocks.Authentication/ src/BuildingBlocks/BuildingBlocks.Authentication/
 WORKDIR /app/src/ApiGateways/Gateway.API
 RUN dotnet publish "Gateway.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
