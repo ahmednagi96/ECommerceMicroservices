@@ -36,7 +36,7 @@ builder.Services.AddRateLimiter(options =>
     // 2) Strict policy, used only by the checkout route
     options.AddPolicy("checkout", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: ClientIp(httpContext),
+            partitionKey: ClientKey(httpContext),
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 5,
